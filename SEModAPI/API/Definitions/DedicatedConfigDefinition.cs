@@ -896,6 +896,62 @@ namespace SEModAPI.API.Definitions
 			}
 		}
 
+        [DataMember]
+		[Browsable(true)]
+		[ReadOnly(false)]
+        [Description("Get or set DestructibleBlocks")]
+		[Category("World Settings")]
+		/// <summary>
+		/// Get or set if the last session should be ignored
+		/// </summary>
+        public bool DestructibleBlocks
+		{
+            get { return m_definition.SessionSettings.DestructibleBlocks; }
+			set
+			{
+                if (m_definition.SessionSettings.DestructibleBlocks == value) return;
+                m_definition.SessionSettings.DestructibleBlocks = value;
+			}
+		}
+
+
+        [DataMember]
+        [Browsable(true)]
+        [ReadOnly(false)]
+        [Description("Get or set EnableIngameScripts")]
+        [Category("World Settings")]
+        /// <summary>
+        /// Get or set if the last session should be ignored
+        /// </summary>
+        public bool EnableIngameScripts
+        {
+            get { return m_definition.SessionSettings.EnableIngameScripts; }
+            set
+            {
+                if (m_definition.SessionSettings.EnableIngameScripts == value) return;
+                m_definition.SessionSettings.EnableIngameScripts = value;
+            }
+        }
+
+
+        [DataMember]
+        [Browsable(true)]
+        [ReadOnly(false)]
+        [Description("Get or set ViewDistance")]
+        [Category("World Settings")]
+        /// <summary>
+        /// Get or set if the last session should be ignored
+        /// </summary>
+        public int ViewDistance
+        {
+            get { return m_definition.SessionSettings.ViewDistance; }
+            set
+            {
+                if (m_definition.SessionSettings.ViewDistance == value) return;
+                m_definition.SessionSettings.ViewDistance = value;
+            }
+        }
+
 		#endregion
 
 		#region "Methods"
