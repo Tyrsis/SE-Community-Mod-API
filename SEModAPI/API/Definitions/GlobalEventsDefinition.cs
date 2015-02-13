@@ -13,16 +13,16 @@ namespace SEModAPI.API.Definitions
 
 		#region "Properties"
 
-		public MyGlobalEventTypeEnum EventType
-		{
-			get { return m_baseDefinition.EventType; }
-			set
-			{
-				if (m_baseDefinition.EventType == value) return;
-				m_baseDefinition.EventType = value;
-				Changed = true;
-			}
-		}
+        //public MyGlobalEventTypeEnum EventType
+        //{
+        //    get { return m_baseDefinition.EventType; }
+        //    set
+        //    {
+        //        if (m_baseDefinition.EventType == value) return;
+        //        m_baseDefinition.EventType = value;
+        //        Changed = true;
+        //    }
+        //}
 
 		public string DisplayName
 		{
