@@ -38,6 +38,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -77,6 +78,7 @@
       <HintPath>..\GameLibraries\Sandbox.Common.XmlSerializers.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Design" />
     <Reference Include="System.Drawing" />
@@ -140,7 +142,16 @@
     <Compile Include="API\Definitions\VoxelMaterialsDefinition.cs" />
     <Compile Include="API\GameInstallation.cs" />
     <Compile Include="API\SEModAPIExceptions.cs" />
-    <Compile Include="API\TypeConverters.cs" />
+    <Compile Include="API\TypeConverters\Vector3Wrapper.cs" />
+    <Compile Include="API\TypeConverters\Vector3DTypeConverter.cs" />
+    <Compile Include="API\TypeConverters\Vector3DWrapper.cs" />
+    <Compile Include="API\TypeConverters\Vector3TypeConverter.cs" />
+    <Compile Include="API\TypeConverters\Vector3ITypeConverter.cs" />
+    <Compile Include="AssemblyFileVersion.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>AssemblyFileVersion.tt</DependentUpon>
+    </Compile>
     <Compile Include="Interop\ClassType.cs" />
     <Compile Include="Interop\CubeType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -177,5 +188,23 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="AssemblyFileVersion.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>AssemblyFileVersion.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>set textTemplatingPath="%25CommonProgramFiles(x86)%25\Microsoft Shared\TextTemplating\$(VisualStudioVersion)\texttransform.exe"
+if %25textTemplatingPath%25=="\Microsoft Shared\TextTemplating\$(VisualStudioVersion)\texttransform.exe" set textTemplatingPath="%25CommonProgramFiles%25\Microsoft Shared\TextTemplating\$(VisualStudioVersion)\texttransform.exe"
+%25textTemplatingPath%25 "$(ProjectDir)AssemblyFileVersion.tt"</PreBuildEvent>
+  </PropertyGroup>
 </Project>

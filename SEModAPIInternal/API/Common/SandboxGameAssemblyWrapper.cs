@@ -114,15 +114,7 @@ namespace SEModAPIInternal.API.Common
 
 		public static SandboxGameAssemblyWrapper Instance
 		{
-			get
-			{
-				if ( m_instance == null )
-				{
-					m_instance = new SandboxGameAssemblyWrapper( );
-				}
-
-				return m_instance;
-			}
+			get { return m_instance ?? ( m_instance = new SandboxGameAssemblyWrapper( ) ); }
 		}
 
 		public static bool IsDebugging { get; set; }
@@ -558,7 +550,7 @@ namespace SEModAPIInternal.API.Common
 		{
 			try
 			{
-				Type type = m_assembly.GetType( namespaceName + "." + className );
+				Type type = m_assembly.GetType( string.Format( "{0}.{1}", namespaceName, className ) );
 
 				return type;
 			}

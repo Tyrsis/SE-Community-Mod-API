@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.ServiceModel;
-using System.ServiceModel.Description;
 using System.Threading;
 using System.Windows.Forms;
 using System.Runtime.ExceptionServices;
@@ -16,7 +15,6 @@ using SEModAPI.API.Definitions;
 using SEModAPIInternal.API.Common;
 using SEModAPIInternal.API.Server;
 using SEModAPIInternal.Support;
-using SEModAPIExtensions.API.IPC;
 using System.ServiceModel.Web;
 
 namespace SEModAPIExtensions.API
@@ -81,65 +79,77 @@ namespace SEModAPIExtensions.API
 			Console.WriteLine("Finished creating server!");
 		}
 
-		private bool SetupServerService()
-		{
-			try
-			{
-				_serverHost = CreateServiceHost( typeof( ServerService ), typeof( IServerServiceContract ), "Server/", "ServerService" );
-				_serverHost.Open( );
-			}
-			catch (CommunicationException ex)
-			{
-				LogManager.ErrorLog.WriteLineAndConsole("An exception occurred: " + ex.Message);
-				_serverHost.Abort( );
-				return false;
-			}
+		//private bool SetupServerService()
+		//{
+		//	try
+		//	{
+		//		_serverHost = CreateServiceHost( typeof( ServerService ), typeof( IServerServiceContract ), "Server/", "ServerService" );
+		//		_serverHost.Open( );
+		//	}
+		//	catch (CommunicationException ex)
+		//	{
+		//		LogManager.ErrorLog.WriteLineAndConsole("An exception occurred: " + ex.Message);
+		//		_serverHost.Abort( );
+		//		return false;
+		//	}
+		//	catch ( TimeoutException ex )
+		//	{
+		//		LogManager.ErrorLog.WriteLineAndConsole( "An exception occurred: " + ex.Message );
+		//		_serverHost.Abort( );
+		//		return false;
+		//	}
 
-			return true;
-		}
+		//	return true;
+		//}
 
-		private bool SetupMainService()
-		{
-			try
-			{
-				_baseHost = CreateServiceHost( typeof( InternalService ), typeof( IInternalServiceContract ), "", "InternalService" );
-				_baseHost.Open( );
-			}
-			catch (CommunicationException ex)
-			{
-				LogManager.ErrorLog.WriteLineAndConsole("An exception occurred: " + ex.Message);
-				_baseHost.Abort( );
-				return false;
-			}
+		//private bool SetupMainService()
+		//{
+		//	try
+		//	{
+		//		_baseHost = CreateServiceHost( typeof ( InternalService ), typeof ( IInternalServiceContract ), "", "InternalService" );
+		//		_baseHost.Open( );
+		//	}
+		//	catch ( CommunicationException ex )
+		//	{
+		//		LogManager.ErrorLog.WriteLineAndConsole( "An exception occurred: " + ex.Message );
+		//		_baseHost.Abort( );
+		//		return false;
+		//	}
+		//	catch ( TimeoutException ex )
+		//	{
+		//		LogManager.ErrorLog.WriteLineAndConsole( "An exception occurred: " + ex.Message );
+		//		_baseHost.Abort( );
+		//		return false;
+		//	}
 
-			return true;
-		}
+		//	return true;
+		//}
 
-		private bool SetupWebService()
-		{
-			Uri webServiceAddress = new Uri( "http://localhost:" + WCFPort + "/SEServerExtender/Web/" );
-			_webHost = new WebServiceHost( typeof( WebService ), webServiceAddress );
-			try
-			{
-				//WebHttpBinding binding = new WebHttpBinding(WebHttpSecurityMode.TransportCredentialOnly);
-				//binding.Security.Mode = WebHttpSecurityMode.TransportCredentialOnly;
-				//binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
-				//ServiceEndpoint endpoint = _webHost.AddServiceEndpoint(typeof(IWebServiceContract), binding, "WebService");
-				//_webHost.Credentials.UserNameAuthentication.UserNamePasswordValidationMode = UserNamePasswordValidationMode.Custom;
-				//_webHost.Credentials.UserNameAuthentication.CustomUserNamePasswordValidator = new UserNameValidator();
-				EnableCorsBehavior ecb = new EnableCorsBehavior();
-				_webHost.Description.Behaviors.Add( ecb );
-				_webHost.Open( );
-			}
-			catch (CommunicationException ex)
-			{
-				Console.WriteLine("An exception occurred: {0}", ex.Message);
-				_webHost.Abort( );
-				return false;
-			}
+		//private bool SetupWebService()
+		//{
+			//Uri webServiceAddress = new Uri( "http://localhost:" + WCFPort + "/SEServerExtender/Web/" );
+			//_webHost = new WebServiceHost( typeof( WebService ), webServiceAddress );
+			//try
+			//{
+			//	//WebHttpBinding binding = new WebHttpBinding(WebHttpSecurityMode.TransportCredentialOnly);
+			//	//binding.Security.Mode = WebHttpSecurityMode.TransportCredentialOnly;
+			//	//binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
+			//	//ServiceEndpoint endpoint = _webHost.AddServiceEndpoint(typeof(IWebServiceContract), binding, "WebService");
+			//	//_webHost.Credentials.UserNameAuthentication.UserNamePasswordValidationMode = UserNamePasswordValidationMode.Custom;
+			//	//_webHost.Credentials.UserNameAuthentication.CustomUserNamePasswordValidator = new UserNameValidator();
+			//	//EnableCorsBehavior ecb = new EnableCorsBehavior();
+			//	//_webHost.Description.Behaviors.Add( ecb );
+			//	//_webHost.Open( );
+			//}
+			//catch (CommunicationException ex)
+			//{
+			//	Console.WriteLine("An exception occurred: {0}", ex.Message);
+			//	//_webHost.Abort( );
+			//	return false;
+			//}
 
-			return true;
-		}
+			//return true;
+		//}
 
 		private bool SetupGameInstallation()
 		{
@@ -148,8 +158,12 @@ namespace SEModAPIExtensions.API
 				string gamePath = _commandLineArgs.GamePath;
 				if (gamePath.Length > 0)
 				{
-					if (!GameInstallationInfo.IsValidGamePath(gamePath))
+					if ( !GameInstallationInfo.IsValidGamePath( gamePath ) )
+					{
+						Console.WriteLine( "{0} is not a valid game path.", gamePath );
+
 						return false;
+					}
 					_gameInstallationInfo = new GameInstallationInfo( gamePath );
 				}
 				else
@@ -159,6 +173,7 @@ namespace SEModAPIExtensions.API
 			}
 			catch (Exception ex)
 			{
+				Console.WriteLine( ex );
 				LogManager.ErrorLog.WriteLine(ex);
 			}
 
@@ -207,10 +222,6 @@ namespace SEModAPIExtensions.API
 				{
 					Console.WriteLine("WCF disabled");
 				}
-				if ( _commandLineArgs.WcfPort > 0 )
-				{
-					Console.WriteLine( "WCF port: " + _commandLineArgs.WcfPort );
-				}
 				if ( _commandLineArgs.Autosave > 0 )
 				{
 					Console.WriteLine( "Autosave interval: " + _commandLineArgs.Autosave );
@@ -231,10 +242,6 @@ namespace SEModAPIExtensions.API
 				{
 					Console.WriteLine("Restart On Crash: Enabled");
 				}
-				if ( _commandLineArgs.AutoSaveSync )
-				{
-					Console.WriteLine("Synchronous Autosave: Enabled");
-				}
 				if ( _commandLineArgs.WorldRequestReplace )
 				{
 					Console.WriteLine("World Request Replace: Enabled");
@@ -242,6 +249,7 @@ namespace SEModAPIExtensions.API
 			}
 			catch (Exception ex)
 			{
+				Console.WriteLine( ex );
 				LogManager.ErrorLog.WriteLine(ex);
 				return false;
 			}
@@ -347,20 +355,6 @@ namespace SEModAPIExtensions.API
 		}
 
 		[IgnoreDataMember]
-		public ushort WCFPort
-		{
-			get
-			{
-				ushort port = _commandLineArgs.WcfPort;
-				if (port == 0)
-					port = 8000;
-
-				return port;
-			}
-			set { _commandLineArgs.WcfPort = value; }
-		}
-
-		[IgnoreDataMember]
 		public string Path
 		{
 			get
@@ -391,33 +385,6 @@ namespace SEModAPIExtensions.API
 
 		#region "Methods"
 
-		public static ServiceHost CreateServiceHost(Type serviceType, Type contractType, string urlExtension, string name)
-		{
-			try
-			{
-				Uri baseAddress = new Uri( string.Format( "http://localhost:{0}/SEServerExtender/{1}", Instance.WCFPort, urlExtension ) );
-				ServiceHost selfHost = new ServiceHost(serviceType, baseAddress);
-
-				WSHttpBinding binding = new WSHttpBinding { Security = { Mode = SecurityMode.Message, Message = { ClientCredentialType = MessageCredentialType.Windows } } };
-				selfHost.AddServiceEndpoint(contractType, binding, name);
-
-				ServiceMetadataBehavior smb = new ServiceMetadataBehavior { HttpGetEnabled = true };
-				selfHost.Description.Behaviors.Add(smb);
-
-				if (SandboxGameAssemblyWrapper.IsDebugging)
-				{
-					Console.WriteLine( "Created WCF service at '{0}'", baseAddress );
-				}
-
-				return selfHost;
-			}
-			catch (CommunicationException ex)
-			{
-				LogManager.ErrorLog.WriteLineAndConsole( string.Format( "An exception occurred: {0}", ex.Message ) );
-				return null;
-			}
-		}
-
 		public void Init()
 		{
 			if ( _isInitialized )
@@ -428,12 +395,12 @@ namespace SEModAPIExtensions.API
 			setupResult &= SetupManagers();
 			setupResult &= ProcessCommandLineArgs();
 
-			if (IsWCFEnabled)
-			{
-				SetupServerService();
-				SetupMainService();
-				SetupWebService();
-			}
+			//if (IsWCFEnabled)
+			//{
+				//SetupServerService();
+				//SetupMainService();
+				//SetupWebService();
+			//}
 
 			if ( _commandLineArgs.Autosave > 0 )
 				_autosaveTimer.Interval = _commandLineArgs.Autosave * 60000;

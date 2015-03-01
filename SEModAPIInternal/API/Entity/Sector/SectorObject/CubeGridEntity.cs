@@ -14,7 +14,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 	using SEModAPIInternal.Support;
 	using VRageMath;
 
-	[DataContract( Name = "CubeGridEntityProxy" )]
+	[DataContract]
 	[KnownType( "KnownTypes" )]
 	public class CubeGridEntity : BaseEntity
 	{
@@ -103,12 +103,12 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			_managerManager = new CubeGridManagerManager( this, GetManagerManager( ) );
 
 			EntityEventManager.EntityEvent newEvent = new EntityEventManager.EntityEvent
-			                                          {
-				                                          type = EntityEventManager.EntityEventType.OnCubeGridCreated,
-				                                          timestamp = DateTime.Now,
-				                                          entity = this,
-				                                          priority = 1
-			                                          };
+													  {
+														  type = EntityEventManager.EntityEventType.OnCubeGridCreated,
+														  timestamp = DateTime.Now,
+														  entity = this,
+														  priority = 1
+													  };
 			EntityEventManager.Instance.AddEvent( newEvent );
 
 			_lastNameRefresh = DateTime.Now;
@@ -125,12 +125,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 		[ReadOnly( true )]
 		new internal static Type InternalType
 		{
-			get
-			{
-				if ( _internalType == null )
-					_internalType = SandboxGameAssemblyWrapper.Instance.GetAssemblyType( CubeGridNamespace, CubeGridClass );
-				return _internalType;
-			}
+			get { return _internalType ?? ( _internalType = SandboxGameAssemblyWrapper.Instance.GetAssemblyType( CubeGridNamespace, CubeGridClass ) ); }
 		}
 
 		[DataMember]
@@ -157,7 +152,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 						{
 							if ( cubeBlock == null )
 								continue;
-							if ( cubeBlock.TypeId != typeof ( MyObjectBuilder_Beacon ) )
+							if ( cubeBlock.TypeId != typeof( MyObjectBuilder_Beacon ) )
 							{
 								continue;
 							}
@@ -437,7 +432,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			//Broadcast the removal to the clients just to save processing time for the clients
 			BaseNetworkManager.RemoveEntity( );
 
-			m_isDisposed = true;
+			MIsDisposed = true;
 
 			if ( EntityId != 0 )
 			{
@@ -445,12 +440,12 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			}
 
 			EntityEventManager.EntityEvent newEvent = new EntityEventManager.EntityEvent
-			                                          {
-				                                          type = EntityEventManager.EntityEventType.OnCubeGridDeleted,
-				                                          timestamp = DateTime.Now,
-				                                          entity = this,
-				                                          priority = 1
-			                                          };
+													  {
+														  type = EntityEventManager.EntityEventType.OnCubeGridDeleted,
+														  timestamp = DateTime.Now,
+														  entity = this,
+														  priority = 1
+													  };
 			EntityEventManager.Instance.AddEvent( newEvent );
 		}
 
@@ -535,6 +530,17 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			}
 		}
 
+		/// <summary>
+		/// Repairs all <see cref="CubeBlockEntity">CubeBlockEntities</see> in this <see cref="CubeGridEntity"/>
+		/// </summary>
+		public void Repair( )
+		{
+			foreach ( CubeBlockEntity block in CubeBlocks )
+			{
+				block.Repair( );
+			}
+		}
+
 		#region "Internal"
 
 		protected Object GetManagerManager( )
@@ -548,12 +554,12 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			try
 			{
 				EntityEventManager.EntityEvent newEvent = new EntityEventManager.EntityEvent
-				                                          {
-					                                          type = EntityEventManager.EntityEventType.OnCubeGridMoved,
-					                                          timestamp = DateTime.Now,
-					                                          entity = this,
-					                                          priority = 9
-				                                          };
+														  {
+															  type = EntityEventManager.EntityEventType.OnCubeGridMoved,
+															  timestamp = DateTime.Now,
+															  entity = this,
+															  priority = 9
+														  };
 				EntityEventManager.Instance.AddEvent( newEvent );
 			}
 			catch ( Exception ex )
@@ -592,7 +598,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 
 			//NOTE - We don't broadcast the removal because the game internals take care of that by broadcasting the removal delta lists every frame update
 
-			InvokeEntityMethod( BackingObject, CubeGridRemoveCubeBlockMethod, new object[ ] { _cubeBlockToAddRemove.BackingObject, Type.Missing } );
+			InvokeEntityMethod( BackingObject, CubeGridRemoveCubeBlockMethod, new[ ] { _cubeBlockToAddRemove.BackingObject, Type.Missing } );
 
 			_cubeBlockToAddRemove = null;
 		}

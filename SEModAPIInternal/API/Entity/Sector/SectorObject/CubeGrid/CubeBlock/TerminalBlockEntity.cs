@@ -9,7 +9,7 @@ using SEModAPIInternal.Support;
 
 namespace SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid.CubeBlock
 {
-	[DataContract( Name = "TerminalBlockEntityProxy" )]
+	[DataContract]
 	[KnownType( typeof( InventoryEntity ) )]
 	public class TerminalBlockEntity : CubeBlockEntity
 	{
@@ -69,8 +69,8 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid.CubeBlock
 			{
 				try
 				{
-					if ( m_objectBuilder == null )
-						m_objectBuilder = new MyObjectBuilder_TerminalBlock( );
+					if ( MObjectBuilder == null )
+						MObjectBuilder = new MyObjectBuilder_TerminalBlock( );
 
 					return (MyObjectBuilder_TerminalBlock)base.ObjectBuilder;
 				}
@@ -152,7 +152,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid.CubeBlock
 				StringBuilder newCustomName = new StringBuilder( m_customName );
 
 				//InvokeEntityMethod(ActualObject, TerminalBlockSetCustomNameMethod, new object[] { newCustomName });
-				InvokeStaticMethod( ActualObject.GetType( ), TerminalBlockBroadcastCustomNameMethod, new object[ ] { ActualObject, newCustomName } );
+				InvokeStaticMethod( ActualObject.GetType( ), TerminalBlockBroadcastCustomNameMethod, new[ ] { ActualObject, newCustomName } );
 			}
 			catch ( Exception ex )
 			{

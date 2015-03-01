@@ -202,7 +202,7 @@ namespace SEServerExtender
 
 		#region "Control"
 
-		private void BTN_ServerControl_Start_Click(object sender, EventArgs e)
+		internal void BTN_ServerControl_Start_Click(object sender, EventArgs e)
 		{
 			m_entityTreeRefreshTimer.Start();
 			m_chatViewRefreshTimer.Start();
@@ -218,7 +218,7 @@ namespace SEServerExtender
 			m_server.StartServer();
 		}
 
-		private void BTN_ServerControl_Stop_Click(object sender, EventArgs e)
+		internal void BTN_ServerControl_Stop_Click(object sender, EventArgs e)
 		{
 			m_entityTreeRefreshTimer.Stop();
 			m_chatViewRefreshTimer.Stop();
@@ -270,6 +270,11 @@ namespace SEServerExtender
 			UpdateControls();
 		}
 
+		internal void ChangeConfigurationName( string configurationName )
+		{
+			CMB_Control_CommonInstanceList.SelectedItem = configurationName;
+		}
+
 		private void CMB_Control_CommonInstanceList_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			if (!CMB_Control_CommonInstanceList.Enabled || CMB_Control_CommonInstanceList.SelectedIndex == -1) return;
@@ -307,7 +312,7 @@ namespace SEServerExtender
 			if (m_server.InstanceName.Length != 0)
 			{
 				CHK_Control_CommonDataPath.Checked = true;
-				foreach (var item in CMB_Control_CommonInstanceList.Items)
+				foreach (object item in CMB_Control_CommonInstanceList.Items)
 				{
 					if (item.ToString().Equals(m_server.InstanceName))
 					{
@@ -391,7 +396,7 @@ namespace SEServerExtender
 				}
 
 				int index = 0;
-				foreach (var item in source)
+				foreach (T item in source)
 				{
 					TreeNode itemNode;
 					if (entriesChanged)
@@ -499,7 +504,7 @@ namespace SEServerExtender
 			}
 
 			m_sectorEntities = SectorObjectManager.Instance.GetTypedInternalData<BaseEntity>();
-			foreach (var entry in m_sectorEntities)
+			foreach (BaseEntity entry in m_sectorEntities)
 			{
 				CubeGridEntity cubeGridEntity = entry as CubeGridEntity;
 				if (cubeGridEntity != null)
@@ -699,7 +704,7 @@ namespace SEServerExtender
 			}
 
 			//Add new nodes
-			foreach (var item in list)
+			foreach (CharacterEntity item in list)
 			{
 				try
 				{
@@ -766,7 +771,7 @@ namespace SEServerExtender
 			}
 
 			//Add new nodes
-			foreach (var item in list)
+			foreach (VoxelMap item in list)
 			{
 				try
 				{
@@ -834,7 +839,7 @@ namespace SEServerExtender
 			}
 
 			//Add new nodes
-			foreach (var item in list)
+			foreach (FloatingObject item in list)
 			{
 				try
 				{
@@ -908,7 +913,7 @@ namespace SEServerExtender
 			}
 
 			//Add new nodes
-			foreach (var item in list)
+			foreach (Meteor item in list)
 			{
 				try
 				{
@@ -995,7 +1000,7 @@ namespace SEServerExtender
 				miscBlocksNode.Nodes.Clear();
 			}
 
-			foreach (var cubeBlock in cubeGrid.CubeBlocks)
+			foreach (CubeBlockEntity cubeBlock in cubeGrid.CubeBlocks)
 			{
 				TreeNode newNode = new TreeNode(cubeBlock.Name);
 				newNode.Name = newNode.Text;
@@ -1131,6 +1136,7 @@ namespace SEServerExtender
 			BTN_Entities_Export.Enabled = false;
 			BTN_Entities_New.Enabled = false;
 			BTN_Entities_Delete.Enabled = false;
+			btnRepairEntity.Enabled = false;
 
 			TreeNode selectedNode = e.Node;
 
@@ -1158,7 +1164,7 @@ namespace SEServerExtender
 			if (selectedNode.Tag == null)
 				return;
 
-			var linkedObject = selectedNode.Tag;
+			object linkedObject = selectedNode.Tag;
 			PG_Entities_Details.SelectedObject = linkedObject;
 
 			//Enable export for all objects that inherit from BaseObject
@@ -1173,16 +1179,19 @@ namespace SEServerExtender
 				BTN_Entities_Delete.Enabled = true;
 			}
 
-			//Enable delete for all objects that inherit from CubeBlockEntity
-			if (linkedObject is CubeBlockEntity)
+			//Enable delete and repair for all objects that inherit from CubeBlockEntity
+			CubeBlockEntity cubeBlockEntity = linkedObject as CubeBlockEntity;
+			if (cubeBlockEntity != null)
 			{
 				BTN_Entities_Delete.Enabled = true;
+				btnRepairEntity.Enabled = true;
 			}
 
 			CubeGridEntity cubeGridEntity = linkedObject as CubeGridEntity;
 			if (cubeGridEntity != null)
 			{
 				BTN_Entities_New.Enabled = true;
+				btnRepairEntity.Enabled = true;
 
 				TRV_Entities.BeginUpdate();
 
@@ -1209,7 +1218,7 @@ namespace SEServerExtender
 						                                                    {
 							                                                    e.Node.Nodes.Clear();
 
-							                                                    foreach (var material in materialDefs)
+							                                                    foreach (MyVoxelMaterialDefinition material in materialDefs)
 							                                                    {
 								                                                    TreeNode newNode = e.Node.Nodes.Add(material.Id.SubtypeName);
 								                                                    newNode.Name = newNode.Text;
@@ -1571,7 +1580,7 @@ namespace SEServerExtender
 			TreeNode node = TRV_Entities.SelectedNode;
 			if (node == null)
 				return;
-			var linkedObject = node.Tag;
+			object linkedObject = node.Tag;
 			PG_Entities_Details.SelectedObject = linkedObject;
 		}
 
@@ -1633,7 +1642,7 @@ namespace SEServerExtender
 			if (chatHistory.Count != m_chatLineCount)
 			{
 				int pos = 0;
-				foreach (var entry in chatHistory)
+				foreach (ChatManager.ChatEvent entry in chatHistory)
 				{
 					if (pos >= m_chatLineCount)
 					{
@@ -1818,7 +1827,7 @@ namespace SEServerExtender
 					}
 
 					//Add new nodes
-					foreach (var item in list)
+					foreach (Faction item in list)
 					{
 						try
 						{
@@ -1871,7 +1880,7 @@ namespace SEServerExtender
 			if (e.Node.Tag == null)
 				return;
 
-			var linkedObject = e.Node.Tag;
+			object linkedObject = e.Node.Tag;
 
 			BTN_Factions_Delete.Enabled = true;
 
@@ -1890,7 +1899,7 @@ namespace SEServerExtender
 			if (node.Tag == null)
 				return;
 
-			var linkedObject = node.Tag;
+			object linkedObject = node.Tag;
 
 			Faction faction = linkedObject as Faction;
 			if (faction != null)
@@ -1922,7 +1931,7 @@ namespace SEServerExtender
 
 				LST_Plugins.BeginUpdate();			
 				LST_Plugins.Items.Clear();
-				foreach (var key in PluginManager.Instance.Plugins.Keys)
+				foreach (Guid key in PluginManager.Instance.Plugins.Keys)
 				{
 					IPlugin plugin = (IPlugin)PluginManager.Instance.Plugins[key]; 
 					LST_Plugins.Items.Add(string.Format( "{0} - {1}", plugin.Name, key ));
@@ -2164,6 +2173,70 @@ namespace SEServerExtender
 				ChatUserItem item = (ChatUserItem)LST_Chat_ConnectedPlayers.SelectedItem;
 				ChatManager.Instance.SendPublicChatMessage(string.Format( "/ban {0}", item.SteamId ));
 			}
+		}
+
+		/// <summary>
+		/// Repairs the selected <see cref="CubeBlockEntity"/> or <see cref="CubeGridEntity"/>
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void btnRepairEntity_Click( object sender, EventArgs e )
+		{
+			bool previousExportButtonState = BTN_Entities_Export.Enabled;
+			bool previousNewButtonState = BTN_Entities_New.Enabled;
+			bool previousDeleteButtonState = BTN_Entities_Delete.Enabled;
+			BTN_Entities_Export.Enabled = false;
+			BTN_Entities_New.Enabled = false;
+			BTN_Entities_Delete.Enabled = false;
+			btnRepairEntity.Enabled = false;
+
+			TreeNode selectedNode = TRV_Entities.SelectedNode;
+
+			if ( selectedNode == null )
+			{
+				MessageBox.Show( this, "Cannot repair that." );
+				return;
+			}
+
+			TreeNode parentNode = TRV_Entities.SelectedNode.Parent;
+
+			if ( parentNode == null )
+			{
+				MessageBox.Show( this, "Cannot repair that." );
+				return;
+			}
+
+			if ( selectedNode.Tag == null )
+			{
+				MessageBox.Show( this, "Cannot repair that." );
+				return;
+			}
+
+			object linkedObject = selectedNode.Tag;
+			PG_Entities_Details.SelectedObject = linkedObject;
+
+			CubeGridEntity cubeGridEntity = linkedObject as CubeGridEntity;
+			if ( cubeGridEntity != null )
+			{
+				cubeGridEntity.Repair( );
+
+				TRV_Entities.BeginUpdate( );
+
+				RenderCubeGridChildNodes( cubeGridEntity, selectedNode );
+
+				TRV_Entities.EndUpdate( );
+			}
+
+			CubeBlockEntity cubeBlockEntity = linkedObject as CubeBlockEntity;
+			if ( cubeBlockEntity != null )
+			{
+				cubeBlockEntity.Repair( );
+			}
+
+			BTN_Entities_Export.Enabled = previousExportButtonState;
+			BTN_Entities_New.Enabled = previousNewButtonState;
+			BTN_Entities_Delete.Enabled = previousDeleteButtonState;
+			btnRepairEntity.Enabled = true;
 		}
 	}
 

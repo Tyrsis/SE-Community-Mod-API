@@ -1,17 +1,17 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using Sandbox.Common.ObjectBuilders.Definitions;
 
 namespace SEModAPI.API.Definitions.CubeBlocks
 {
+	using System.Linq;
+
 	/// <summary>
-	/// This class is intended to manage the modification and persistente of CubeBlocks.sbc
+	/// This class is intended to manage the modification and persistence of CubeBlocks.sbc
 	/// </summary>
 	public class BlocksManager
 	{
 		#region "Attributes"
 
-		private const string DefaultFileName = "CubeBlocks.sbc";
 		private readonly ConfigFileSerializer _configFileSerializer;
 		private MyObjectBuilder_Definitions _definitions;
 
@@ -102,7 +102,7 @@ namespace SEModAPI.API.Definitions.CubeBlocks
 		}
 
 		/// <summary>
-		/// Get the container for LightingBlocks
+		/// Get the container for MotorStators
 		/// </summary>
 		public List<MotorStatorDefinition> MotorStators
 		{
@@ -142,7 +142,7 @@ namespace SEModAPI.API.Definitions.CubeBlocks
 		}
 
 		/// <summary>
-		/// Get the container for ShipDrills
+		/// Get the container for SolarPanels
 		/// </summary>
 		public List<SolarPanelDefinition> SolarPanels
 		{
@@ -150,7 +150,7 @@ namespace SEModAPI.API.Definitions.CubeBlocks
 		}
 
 		/// <summary>
-		/// Get the container for ShipDrills
+		/// Get the container for Thrusters
 		/// </summary>
 		public List<ThrusterDefinition> Thrusters
 		{
@@ -158,7 +158,7 @@ namespace SEModAPI.API.Definitions.CubeBlocks
 		}
 
 		/// <summary>
-		/// Get the container for ShipDrills
+		/// Get the container for VirtualMasses
 		/// </summary>
 		public List<VirtualMassDefinition> VirtualMasses
 		{
@@ -170,19 +170,12 @@ namespace SEModAPI.API.Definitions.CubeBlocks
 		#region "Methods"
 
 		/// <summary>
-		/// Method that scan definitions for changes
+		/// Method that scans definitions for changes
 		/// </summary>
 		/// <returns></returns>
 		public bool FindChangesInDefinitions()
 		{
-			foreach (BlockDefinition block in ExtractDefinitionsFromContainers())
-			{
-				if (block.Changed)
-				{
-					return true;
-				}
-			}
-			return false;
+			return ExtractDefinitionsFromContainers( ).Any( block => block.Changed );
 		}
 
 		/// <summary>

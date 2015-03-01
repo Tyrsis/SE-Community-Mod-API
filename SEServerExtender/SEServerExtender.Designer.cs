@@ -93,6 +93,7 @@
 			this.TB_Statistics = new System.Windows.Forms.TextBox();
 			this.SS_Bottom = new System.Windows.Forms.StatusStrip();
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+			this.btnRepairEntity = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -404,6 +405,7 @@
 			// 
 			// splitContainer5.Panel2
 			// 
+			this.splitContainer5.Panel2.Controls.Add(this.btnRepairEntity);
 			this.splitContainer5.Panel2.Controls.Add(this.BTN_Entities_Export);
 			this.splitContainer5.Panel2.Controls.Add(this.BTN_Entities_New);
 			this.splitContainer5.Panel2.Controls.Add(this.BTN_Entities_Delete);
@@ -441,9 +443,9 @@
 			// BTN_Entities_Export
 			// 
 			this.BTN_Entities_Export.Enabled = false;
-			this.BTN_Entities_Export.Location = new System.Drawing.Point(10, 5);
+			this.BTN_Entities_Export.Location = new System.Drawing.Point(4, 4);
 			this.BTN_Entities_Export.Name = "BTN_Entities_Export";
-			this.BTN_Entities_Export.Size = new System.Drawing.Size(75, 23);
+			this.BTN_Entities_Export.Size = new System.Drawing.Size(53, 23);
 			this.BTN_Entities_Export.TabIndex = 2;
 			this.BTN_Entities_Export.Text = "Export";
 			this.BTN_Entities_Export.UseVisualStyleBackColor = true;
@@ -452,9 +454,9 @@
 			// BTN_Entities_New
 			// 
 			this.BTN_Entities_New.Enabled = false;
-			this.BTN_Entities_New.Location = new System.Drawing.Point(141, 5);
+			this.BTN_Entities_New.Location = new System.Drawing.Point(188, 4);
 			this.BTN_Entities_New.Name = "BTN_Entities_New";
-			this.BTN_Entities_New.Size = new System.Drawing.Size(75, 23);
+			this.BTN_Entities_New.Size = new System.Drawing.Size(53, 23);
 			this.BTN_Entities_New.TabIndex = 1;
 			this.BTN_Entities_New.Text = "New";
 			this.BTN_Entities_New.UseVisualStyleBackColor = true;
@@ -463,9 +465,9 @@
 			// BTN_Entities_Delete
 			// 
 			this.BTN_Entities_Delete.Enabled = false;
-			this.BTN_Entities_Delete.Location = new System.Drawing.Point(222, 5);
+			this.BTN_Entities_Delete.Location = new System.Drawing.Point(243, 4);
 			this.BTN_Entities_Delete.Name = "BTN_Entities_Delete";
-			this.BTN_Entities_Delete.Size = new System.Drawing.Size(75, 23);
+			this.BTN_Entities_Delete.Size = new System.Drawing.Size(53, 23);
 			this.BTN_Entities_Delete.TabIndex = 0;
 			this.BTN_Entities_Delete.Text = "Delete";
 			this.BTN_Entities_Delete.UseVisualStyleBackColor = true;
@@ -937,6 +939,17 @@
 			this.toolStripStatusLabel1.Size = new System.Drawing.Size(124, 17);
 			this.toolStripStatusLabel1.Text = "Updates Per Second: 0";
 			// 
+			// btnRepairEntity
+			// 
+			this.btnRepairEntity.Enabled = false;
+			this.btnRepairEntity.Location = new System.Drawing.Point(133, 4);
+			this.btnRepairEntity.Name = "btnRepairEntity";
+			this.btnRepairEntity.Size = new System.Drawing.Size(53, 23);
+			this.btnRepairEntity.TabIndex = 3;
+			this.btnRepairEntity.Text = "Repair";
+			this.btnRepairEntity.UseVisualStyleBackColor = true;
+			this.btnRepairEntity.Click += new System.EventHandler(this.btnRepairEntity_Click);
+			// 
 			// SEServerExtender
 			// 
 			this.AcceptButton = this.BTN_Chat_Send;
@@ -1058,7 +1071,7 @@
 		private System.Windows.Forms.Button BTN_Control_Server_Reset;
 		private System.Windows.Forms.Button BTN_Control_Server_Save;
 		private System.Windows.Forms.Label LBL_Control_Instance;
-		private System.Windows.Forms.ComboBox CMB_Control_CommonInstanceList;
+		internal System.Windows.Forms.ComboBox CMB_Control_CommonInstanceList;
 		private System.Windows.Forms.CheckBox CHK_Control_CommonDataPath;
 		private System.Windows.Forms.TabPage TAB_Utilities_Page;
 		private System.Windows.Forms.SplitContainer splitContainer4;
@@ -1086,5 +1099,6 @@
 		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
 		private System.Windows.Forms.TabPage TAB_Statistics;
 		private System.Windows.Forms.TextBox TB_Statistics;
+		private System.Windows.Forms.Button btnRepairEntity;
 	}
 }

@@ -50,7 +50,7 @@ namespace SEModAPIInternal.API.Utility
 				Type[ ] genericArgs = rawType.GetGenericArguments( );
 				MethodInfo conversion = typeof( UtilityFunctions ).GetMethod( "ConvertEntityHashSet", BindingFlags.Public | BindingFlags.Static );
 				conversion = conversion.MakeGenericMethod( genericArgs[ 0 ] );
-				HashSet<Object> result = (HashSet<Object>)conversion.Invoke( null, new object[ ] { source } );
+				HashSet<Object> result = (HashSet<Object>)conversion.Invoke( null, new[ ] { source } );
 
 				return result;
 			}
@@ -69,7 +69,7 @@ namespace SEModAPIInternal.API.Utility
 				Type[ ] genericArgs = rawType.GetGenericArguments( );
 				MethodInfo conversion = typeof( UtilityFunctions ).GetMethod( "ConvertEntityList", BindingFlags.Public | BindingFlags.Static );
 				conversion = conversion.MakeGenericMethod( genericArgs[ 0 ] );
-				List<Object> result = (List<Object>)conversion.Invoke( null, new object[ ] { source } );
+				List<Object> result = (List<Object>)conversion.Invoke( null, new[ ] { source } );
 
 				return result;
 			}
@@ -88,7 +88,7 @@ namespace SEModAPIInternal.API.Utility
 				Type[ ] genericArgs = rawType.GetGenericArguments( );
 				MethodInfo conversion = typeof( UtilityFunctions ).GetMethod( "ConvertEntityDictionary", BindingFlags.Public | BindingFlags.Static );
 				conversion = conversion.MakeGenericMethod( genericArgs );
-				Dictionary<T, Object> result = (Dictionary<T, Object>)conversion.Invoke( null, new object[ ] { source } );
+				Dictionary<T, Object> result = (Dictionary<T, Object>)conversion.Invoke( null, new[ ] { source } );
 
 				return result;
 			}
@@ -107,7 +107,7 @@ namespace SEModAPIInternal.API.Utility
 				Type[ ] genericArgs = rawType.GetGenericArguments( );
 				MethodInfo conversion = typeof( UtilityFunctions ).GetMethod( "ConvertEntityDictionaryReverse", BindingFlags.Public | BindingFlags.Static );
 				conversion = conversion.MakeGenericMethod( genericArgs );
-				Dictionary<Object, T> result = (Dictionary<Object, T>)conversion.Invoke( null, new object[ ] { source } );
+				Dictionary<Object, T> result = (Dictionary<Object, T>)conversion.Invoke( null, new[ ] { source } );
 				return result;
 			}
 			catch ( Exception ex )
@@ -155,13 +155,13 @@ namespace SEModAPIInternal.API.Utility
 			return dataSet;
 		}
 
-		public static Dictionary<T, Object> ConvertEntityDictionary<T, U>( IEnumerable<KeyValuePair<T, U>> source )
+		public static Dictionary<T, Object> ConvertEntityDictionary<T, TU>( IEnumerable<KeyValuePair<T, TU>> source )
 		{
 			Dictionary<T, Object> dataSet = new Dictionary<T, Object>( );
 
 			try
 			{
-				foreach ( KeyValuePair<T, U> rawEntity in source )
+				foreach ( KeyValuePair<T, TU> rawEntity in source )
 				{
 					dataSet.Add( rawEntity.Key, rawEntity.Value );
 				}
@@ -174,13 +174,13 @@ namespace SEModAPIInternal.API.Utility
 			return dataSet;
 		}
 
-		public static Dictionary<Object, T> ConvertEntityDictionaryReverse<U, T>( IEnumerable<KeyValuePair<U, T>> source )
+		public static Dictionary<Object, TU1> ConvertEntityDictionaryReverse<T1, TU1>( IEnumerable<KeyValuePair<T1, TU1>> source )
 		{
-			Dictionary<Object, T> dataSet = new Dictionary<Object, T>( );
+			Dictionary<Object, TU1> dataSet = new Dictionary<Object, TU1>( );
 
 			try
 			{
-				foreach ( KeyValuePair<U, T> rawEntity in source )
+				foreach ( KeyValuePair<T1, TU1> rawEntity in source )
 				{
 					dataSet.Add( rawEntity.Key, rawEntity.Value );
 				}
@@ -199,7 +199,7 @@ namespace SEModAPIInternal.API.Utility
 			{
 				MethodInfo conversion = typeof( UtilityFunctions ).GetMethod( "CastObject", BindingFlags.Public | BindingFlags.Static );
 				conversion = conversion.MakeGenericMethod( newType );
-				Object result = conversion.Invoke( null, new object[ ] { source } );
+				Object result = conversion.Invoke( null, new[ ] { source } );
 
 				return result;
 			}

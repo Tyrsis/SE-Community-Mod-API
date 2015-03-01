@@ -9,7 +9,7 @@ using SEModAPIInternal.Support;
 
 namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 {
-	[DataContract( Name = "MeteorProxy" )]
+	[DataContract]
 	public class Meteor : BaseEntity
 	{
 		#region "Attributes"
@@ -46,12 +46,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 		[ReadOnly( true )]
 		new internal static Type InternalType
 		{
-			get
-			{
-				if ( m_internalType == null )
-					m_internalType = SandboxGameAssemblyWrapper.Instance.GetAssemblyType( MeteorNamespace, MeteorClass );
-				return m_internalType;
-			}
+			get { return m_internalType ?? ( m_internalType = SandboxGameAssemblyWrapper.Instance.GetAssemblyType( MeteorNamespace, MeteorClass ) ); }
 		}
 
 		[DataMember]

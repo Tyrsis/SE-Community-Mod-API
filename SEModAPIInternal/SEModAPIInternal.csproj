@@ -80,23 +80,35 @@
     <Compile Include="API\Common\GameObjectRegistry.cs" />
     <Compile Include="API\Common\NetworkManager.cs" />
     <Compile Include="API\Common\PlayerManager.cs" />
+    <Compile Include="API\Common\PlayerMap.cs" />
     <Compile Include="API\Common\PowerManager.cs" />
     <Compile Include="API\Common\RadioManager.cs" />
+    <Compile Include="API\Common\RadioManagerNetworkManager.cs" />
     <Compile Include="API\Common\WorldManager.cs" />
     <Compile Include="API\Entity\BaseEntity.cs" />
+    <Compile Include="API\Entity\BaseEntityNetworkManager.cs" />
     <Compile Include="API\Entity\BaseObject.cs" />
+    <Compile Include="API\Entity\BaseObjectManager.cs" />
+    <Compile Include="API\Entity\InventoryItemEntity.cs" />
+    <Compile Include="API\Entity\InventoryItemManager.cs" />
     <Compile Include="API\Entity\PowerProducer.cs" />
     <Compile Include="API\Entity\PowerReceiver.cs" />
+    <Compile Include="API\Entity\SectorManager.cs" />
+    <Compile Include="API\Entity\SectorObjectManager.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGridEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGridManagerManager.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGridNetworkManager.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\AntennaEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\AssemblerEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\BatteryBlockEntity.cs" />
+    <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\BatteryBlockNetworkManager.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ButtonPanelEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\CameraBlockEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ConveyorBlockEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ConveyorTubeEntity.cs" />
+    <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\GyroNetworkManager.cs" />
+    <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\LandingGearNetworkManager.cs" />
+    <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ProductionQueueItem.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ShipConnectorEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\InteriorTurretEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\DoorEntity.cs" />
@@ -116,6 +128,7 @@
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\LightEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\RotorEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ShipControllerEntity.cs" />
+    <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ShipControllerNetworkManager.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ShipDrillEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ShipGrinderEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ShipToolBaseEntity.cs" />
@@ -124,7 +137,11 @@
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\SolarPanelEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ThrustEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\TurretBaseEntity.cs" />
+    <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\TurretNetworkManager.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\VirtualMassEntity.cs" />
+    <Compile Include="API\Entity\Sector\SectorObject\FloatingObjectManager.cs" />
+    <Compile Include="API\Entity\Sector\SectorObject\VoxelMapMaterialManager.cs" />
+    <Compile Include="API\Server\MyObjectSeedType.cs" />
     <Compile Include="API\Server\ServerNetworkManager.cs" />
     <Compile Include="API\Utility\Utility.cs" />
     <Compile Include="API\Entity\SectorEntity.cs" />
@@ -148,7 +165,13 @@
     <Compile Include="API\Entity\Sector\SectorObject\VoxelMap.cs" />
     <Compile Include="API\Common\SandboxGameAssemblyWrapper.cs" />
     <Compile Include="API\Server\ServerAssemblyWrapper.cs" />
+    <Compile Include="AssemblyFileVersion.cs">
+      <DependentUpon>AssemblyFileVersion.tt</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Support\ApplicationLog.cs" />
     <Compile Include="Support\EntityException.cs" />
     <Compile Include="Support\LogManager.cs" />
   </ItemGroup>
@@ -177,6 +200,7 @@
       <HintPath>..\GameLibraries\SteamSDK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.XML" />
@@ -221,7 +245,25 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="AssemblyFileVersion.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>AssemblyFileVersion.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>set textTemplatingPath="%25CommonProgramFiles(x86)%25\Microsoft Shared\TextTemplating\$(VisualStudioVersion)\texttransform.exe"
+if %25textTemplatingPath%25=="\Microsoft Shared\TextTemplating\$(VisualStudioVersion)\texttransform.exe" set textTemplatingPath="%25CommonProgramFiles%25\Microsoft Shared\TextTemplating\$(VisualStudioVersion)\texttransform.exe"
+%25textTemplatingPath%25 "$(ProjectDir)AssemblyFileVersion.tt"</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -14,16 +14,6 @@ using SEModAPIInternal.Support;
 
 namespace SEModAPIExtensions.API
 {
-	public class PluginManagerThreadParams
-	{
-		public Object Plugin;
-		public Guid Key;
-		public Dictionary<Guid, Object> Plugins;
-		public Dictionary<Guid, bool> PluginState;
-		public List<EntityEventManager.EntityEvent> Events;
-		public List<ChatManager.ChatEvent> ChatEvents;
-	}
-
 	public class PluginManager
 	{
 		#region "Attributes"
@@ -61,28 +51,7 @@ namespace SEModAPIExtensions.API
 			m_lastConnectedPlayerList = new List<ulong>( );
 			m_pluginPaths = new Dictionary<Guid, string>( );
 
-			SetupWcfService( );
-
 			Console.WriteLine( "Finished loading PluginManager" );
-		}
-
-		private static void SetupWcfService( )
-		{
-			if ( !Server.Instance.IsWCFEnabled )
-				return;
-
-			ServiceHost selfHost = null;
-			try
-			{
-				selfHost = Server.CreateServiceHost( typeof( PluginService ), typeof( IPluginServiceContract ), "Plugin/", "PluginService" );
-				selfHost.Open( );
-			}
-			catch ( CommunicationException ex )
-			{
-				LogManager.ErrorLog.WriteLineAndConsole( string.Format( "An exception occurred: {0}", ex.Message ) );
-				if ( selfHost != null )
-					selfHost.Abort( );
-			}
 		}
 
 		#endregion
@@ -562,17 +531,17 @@ namespace SEModAPIExtensions.API
 
 		public void UnloadPlugin( Guid key )
 		{
+			object plugin;
 			//Skip if the plugin doesn't exist
-			if ( !Plugins.ContainsKey( key ) )
+			if ( !Plugins.TryGetValue( key, out plugin ) )
 				return;
 
 			//Skip if the plugin is already unloaded
 			if ( !PluginStates.ContainsKey( key ) )
 				return;
 
-			LogManager.APILog.WriteLineAndConsole( "Unloading plugin '" + key + "'" );
+			LogManager.APILog.WriteLineAndConsole( string.Format( "Unloading plugin '{0}'", key ) );
 
-			object plugin = Plugins[ key ];
 			try
 			{
 				MethodInfo initMethod = plugin.GetType( ).GetMethod( "Shutdown" );
@@ -590,10 +559,8 @@ namespace SEModAPIExtensions.API
 
 		public bool GetPluginState( Guid key )
 		{
-			if ( !PluginStates.ContainsKey( key ) )
-				return false;
-
-			return PluginStates[ key ];
+			bool pluginState;
+			return PluginStates.TryGetValue( key, out pluginState ) && pluginState;
 		}
 
 		#endregion

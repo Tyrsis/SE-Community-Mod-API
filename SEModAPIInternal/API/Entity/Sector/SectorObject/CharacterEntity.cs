@@ -11,7 +11,7 @@ using SEModAPIInternal.Support;
 
 namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 {
-	[DataContract( Name = "CharacterEntityProxy" )]
+	[DataContract]
 	public class CharacterEntity : BaseEntity
 	{
 		#region "Attributes"
@@ -87,12 +87,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 		[ReadOnly( true )]
 		new internal static Type InternalType
 		{
-			get
-			{
-				if ( m_internalType == null )
-					m_internalType = SandboxGameAssemblyWrapper.Instance.GetAssemblyType( CharacterNamespace, CharacterClass );
-				return m_internalType;
-			}
+			get { return m_internalType ?? ( m_internalType = SandboxGameAssemblyWrapper.Instance.GetAssemblyType( CharacterNamespace, CharacterClass ) ); }
 		}
 
 		[DataMember]
@@ -293,20 +288,20 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 				if ( type == null )
 					throw new Exception( "Could not find internal type for CharacterEntity" );
 				bool result = true;
-				result &= BaseObject.HasMethod( type, CharacterGetHealthMethod );
-				result &= BaseObject.HasMethod( type, CharacterDamageCharacterMethod );
-				result &= BaseObject.HasMethod( type, CharacterSetHealthMethod );
-				result &= BaseObject.HasMethod( type, CharacterGetBatteryMethod );
-				result &= BaseObject.HasMethod( type, CharacterGetInventoryMethod );
-				result &= BaseObject.HasMethod( type, CharacterGetDisplayNameMethod );
-				result &= BaseObject.HasMethod( type, CharacterGetNetworkManagerMethod );
-				result &= BaseObject.HasField( type, CharacterItemListField );
+				result &= HasMethod( type, CharacterGetHealthMethod );
+				result &= HasMethod( type, CharacterDamageCharacterMethod );
+				result &= HasMethod( type, CharacterSetHealthMethod );
+				result &= HasMethod( type, CharacterGetBatteryMethod );
+				result &= HasMethod( type, CharacterGetInventoryMethod );
+				result &= HasMethod( type, CharacterGetDisplayNameMethod );
+				result &= HasMethod( type, CharacterGetNetworkManagerMethod );
+				result &= HasField( type, CharacterItemListField );
 
 				Type type2 = SandboxGameAssemblyWrapper.Instance.GetAssemblyType( CharacterBatteryNamespace, CharacterBatteryClass );
 				if ( type2 == null )
 					throw new Exception( "Could not find battery type for CharacterEntity" );
-				result &= BaseObject.HasMethod( type2, CharacterBatterySetBatteryCapacityMethod );
-				result &= BaseObject.HasField( type2, CharacterBatteryCapacityField );
+				result &= HasMethod( type2, CharacterBatterySetBatteryCapacityMethod );
+				result &= HasField( type2, CharacterBatteryCapacityField );
 
 				return result;
 			}
@@ -319,7 +314,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 
 		public override void Dispose( )
 		{
-			m_isDisposed = true;
+			MIsDisposed = true;
 
 			LogManager.APILog.WriteLine( "Disposing CharacterEntity '" + Name + "'" );
 
@@ -554,7 +549,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			try
 			{
 				MethodInfo basePacketHandlerMethod = BaseObject.GetStaticMethod( InternalType, "4055A1176BF0FA0C554491A3206CD656" );
-				basePacketHandlerMethod.Invoke( null, new object[ ] { instanceNetManager, packet, masterNetManager } );
+				basePacketHandlerMethod.Invoke( null, new[ ] { instanceNetManager, packet, masterNetManager } );
 			}
 			catch ( Exception ex )
 			{
@@ -567,7 +562,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			try
 			{
 				MethodInfo basePacketHandlerMethod = BaseObject.GetStaticMethod( InternalType, "F990CA0A818DDC8A56001B3D630EE54C" );
-				basePacketHandlerMethod.Invoke( null, new object[ ] { instanceNetManager, packet, masterNetManager } );
+				basePacketHandlerMethod.Invoke( null, new[ ] { instanceNetManager, packet, masterNetManager } );
 			}
 			catch ( Exception ex )
 			{
@@ -581,7 +576,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			{
 				Type type = SandboxGameAssemblyWrapper.Instance.GetAssemblyType( "AAC05F537A6F0F6775339593FBDFC564", "7B40EEB62BF9EBADF967050BFA3976CA" );
 				MethodInfo basePacketHandlerMethod = BaseObject.GetStaticMethod( type, "364216D779218E8D22F3991B8FBA170A" );
-				basePacketHandlerMethod.Invoke( null, new object[ ] { packet, masterNetManager } );
+				basePacketHandlerMethod.Invoke( null, new[ ] { packet, masterNetManager } );
 			}
 			catch ( Exception ex )
 			{

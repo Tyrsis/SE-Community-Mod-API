@@ -1,121 +1,59 @@
-﻿using SteamSDK;
-
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.ServiceModel;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Xml;
-
-using Sandbox.Common.ObjectBuilders;
-
-using SEModAPIInternal.API.Server;
-using SEModAPIInternal.API.Common;
-using SEModAPIInternal.API.Entity;
-using SEModAPIInternal.API.Entity.Sector.SectorObject;
-using SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid;
-using SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid.CubeBlock;
-using SEModAPIInternal.Support;
-
-using VRage;
-using VRage.Common.Utils;
-using VRageMath;
-
-using Sandbox.ModAPI;
-
-namespace SEModAPIExtensions.API
+﻿namespace SEModAPIExtensions.API
 {
+	using System;
+	using System.Collections.Generic;
+	using System.IO;
 	using System.Linq;
+	using System.Reflection;
+	using System.Runtime.InteropServices;
+	using System.Text.RegularExpressions;
+	using System.Threading;
+	using System.Xml;
+	using Sandbox.Common.ObjectBuilders;
+	using Sandbox.ModAPI;
+	using SEModAPIInternal.API.Common;
+	using SEModAPIInternal.API.Entity;
+	using SEModAPIInternal.API.Entity.Sector.SectorObject;
+	using SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid;
+	using SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid.CubeBlock;
+	using SEModAPIInternal.API.Server;
+	using SEModAPIInternal.Support;
+	using SteamSDK;
+	using VRage;
+	using VRage.Common.Utils;
+	using VRageMath;
 
 	public class ChatManager
 	{
-		public struct ChatCommand
-		{
-			public ChatCommand( string command, Action<ChatEvent> callback, bool requiresAdmin )
-			{
-				Command = command;
-				Callback = callback;
-				RequiresAdmin = requiresAdmin;
-			}
-			public string Command;
-			public Action<ChatEvent> Callback;
-			public bool RequiresAdmin;
-		}
-
 		public enum ChatEventType
 		{
 			OnChatReceived,
-			OnChatSent,
+			OnChatSent
 		}
 
-		public struct ChatEvent
-		{
-			public ChatEvent( ChatEventType type, DateTime timestamp, ulong sourceUserId, ulong remoteUserId, string message, ushort priority )
-			{
-				Type = type;
-				Timestamp = timestamp;
-				SourceUserId = sourceUserId;
-				RemoteUserId = remoteUserId;
-				Message = message;
-				Priority = priority;
-			}
-
-			public ChatEventType Type;
-			public DateTime Timestamp;
-			public ulong SourceUserId;
-			public ulong RemoteUserId;
-			public string Message;
-			public ushort Priority;
-
-			public ChatEvent( DateTime timestamp, ulong remoteUserId, string message )
-			{
-				Timestamp = timestamp;
-				RemoteUserId = remoteUserId;
-				Message = message;
-
-				//Defaults
-				Type = ChatEventType.OnChatReceived;
-				SourceUserId = 0;
-				Priority = 0;
-			}
-		}
-
-		#region "Attributes"
-
-		private static ChatManager m_instance;
-
-		private static List<string> m_chatMessages;
-		private static List<ChatEvent> m_chatHistory;
-		private static bool m_chatHandlerSetup;
-		private static FastResourceLock m_resourceLock;
-
-		private List<ChatEvent> m_chatEvents;
-		private Dictionary<ChatCommand, Guid> m_chatCommands;
-
+		private static ChatManager _instance;
+		private static List<string> _chatMessages;
+		private static List<ChatEvent> _chatHistory;
+		private static bool _chatHandlerSetup;
+		private static FastResourceLock _resourceLock;
 		/////////////////////////////////////////////////////////////////////////////
 
 		public static string ChatMessageStructNamespace = "C42525D7DE28CE4CFB44651F3D03A50D";
 		public static string ChatMessageStructClass = "12AEE9CB08C9FC64151B8A094D6BB668";
-
 		public static string ChatMessageMessageField = "EDCBEBB604B287DFA90A5A46DC7AD28D";
-
-		#endregion
-
-		#region "Constructors and Initializers"
+		private readonly Dictionary<ChatCommand, Guid> _chatCommands;
+		private readonly List<ChatEvent> _chatEvents;
 
 		protected ChatManager( )
 		{
-			m_instance = this;
+			_instance = this;
 
-			m_chatMessages = new List<string>( );
-			m_chatHistory = new List<ChatEvent>( );
-			m_chatHandlerSetup = false;
-			m_resourceLock = new FastResourceLock( );
-			m_chatEvents = new List<ChatEvent>( );
-			m_chatCommands = new Dictionary<ChatCommand, Guid>( );
+			_chatMessages = new List<string>( );
+			_chatHistory = new List<ChatEvent>( );
+			_chatHandlerSetup = false;
+			_resourceLock = new FastResourceLock( );
+			_chatEvents = new List<ChatEvent>( );
+			_chatCommands = new Dictionary<ChatCommand, Guid>( );
 
 			ChatCommand deleteCommand = new ChatCommand( "delete", Command_Delete, true );
 
@@ -169,38 +107,10 @@ namespace SEModAPIExtensions.API
 			RegisterChatCommand( unbanCommand );
 			RegisterChatCommand( asyncSaveCommand );
 
-			SetupWcfService( );
-
 			Console.WriteLine( "Finished loading ChatManager" );
 		}
 
-		private static void SetupWcfService( )
-		{
-			if ( !Server.Instance.IsWCFEnabled )
-				return;
-
-			ServiceHost selfHost = null;
-			try
-			{
-				selfHost = Server.CreateServiceHost( typeof( ChatService ), typeof( IChatServiceContract ), "Chat/", "ChatService" );
-				selfHost.Open( );
-			}
-			catch ( CommunicationException ex )
-			{
-				LogManager.ErrorLog.WriteLineAndConsole( string.Format( "An exception occurred: {0}", ex.Message ) );
-				if ( selfHost != null )
-					selfHost.Abort( );
-			}
-		}
-
-		#endregion
-
-		#region "Properties"
-
-		public static ChatManager Instance
-		{
-			get { return m_instance ?? ( m_instance = new ChatManager( ) ); }
-		}
+		public static ChatManager Instance { get { return _instance ?? ( _instance = new ChatManager( ) ); } }
 
 		public List<string> ChatMessages
 		{
@@ -208,7 +118,7 @@ namespace SEModAPIExtensions.API
 			{
 				SetupChatHandlers( );
 
-				return m_chatMessages;
+				return _chatMessages;
 			}
 		}
 
@@ -218,11 +128,11 @@ namespace SEModAPIExtensions.API
 			{
 				SetupChatHandlers( );
 
-				m_resourceLock.AcquireShared( );
+				_resourceLock.AcquireShared( );
 
-				List<ChatEvent> history = new List<ChatEvent>( m_chatHistory );
+				List<ChatEvent> history = new List<ChatEvent>( _chatHistory );
 
-				m_resourceLock.ReleaseShared( );
+				_resourceLock.ReleaseShared( );
 
 				return history;
 			}
@@ -234,16 +144,10 @@ namespace SEModAPIExtensions.API
 			{
 				SetupChatHandlers( );
 
-				List<ChatEvent> copy = new List<ChatEvent>( m_chatEvents.ToArray( ) );
+				List<ChatEvent> copy = new List<ChatEvent>( _chatEvents.ToArray( ) );
 				return copy;
 			}
 		}
-
-		#endregion
-
-		#region "Methods"
-
-		#region "General"
 
 		public static bool ReflectionUnitTest( )
 		{
@@ -251,13 +155,15 @@ namespace SEModAPIExtensions.API
 			{
 				Type type = SandboxGameAssemblyWrapper.Instance.GetAssemblyType( ChatMessageStructNamespace, ChatMessageStructClass );
 				if ( type == null )
-					throw new Exception( "Could not find internal type for ChatMessageStruct" );
+				{
+					throw new TypeLoadException( "Could not find internal type for ChatMessageStruct" );
+				}
 				bool result = true;
 				result &= BaseObject.HasField( type, ChatMessageMessageField );
 
 				return result;
 			}
-			catch ( Exception ex )
+			catch ( TypeLoadException ex )
 			{
 				Console.WriteLine( ex );
 				return false;
@@ -266,22 +172,28 @@ namespace SEModAPIExtensions.API
 
 		private void SetupChatHandlers( )
 		{
-			if ( m_chatHandlerSetup )
+			if ( _chatHandlerSetup )
+			{
 				return;
+			}
 
 			if ( !SandboxGameAssemblyWrapper.Instance.IsGameStarted )
+			{
 				return;
+			}
 
 			try
 			{
 				object netManager = NetworkManager.GetNetworkManager( );
 				if ( netManager == null )
+				{
 					return;
+				}
 
 				Action<ulong, string, ChatEntryTypeEnum> chatHook = ReceiveChatMessage;
 				ServerNetworkManager.Instance.RegisterChatReceiver( chatHook );
 
-				m_chatHandlerSetup = true;
+				_chatHandlerSetup = true;
 			}
 			catch ( Exception ex )
 			{
@@ -308,24 +220,28 @@ namespace SEModAPIExtensions.API
 
 			if ( !commandParsed && entryType == ChatEntryTypeEnum.ChatMsg )
 			{
-				m_chatMessages.Add( string.Format( "{0}: {1}", playerName, message ) );
+				_chatMessages.Add( string.Format( "{0}: {1}", playerName, message ) );
 				LogManager.ChatLog.WriteLineAndConsole( string.Format( "Chat - Client '{0}': {1}", playerName, message ) );
 			}
 
 			ChatEvent chatEvent = new ChatEvent( ChatEventType.OnChatReceived, DateTime.Now, remoteUserId, 0, message, 0 );
 			Instance.AddEvent( chatEvent );
 
-			m_resourceLock.AcquireExclusive( );
-			m_chatHistory.Add( chatEvent );
-			m_resourceLock.ReleaseExclusive( );
+			_resourceLock.AcquireExclusive( );
+			_chatHistory.Add( chatEvent );
+			_resourceLock.ReleaseExclusive( );
 		}
 
 		public void SendPrivateChatMessage( ulong remoteUserId, string message )
 		{
 			if ( !SandboxGameAssemblyWrapper.Instance.IsGameStarted )
+			{
 				return;
+			}
 			if ( string.IsNullOrEmpty( message ) )
+			{
 				return;
+			}
 
 			try
 			{
@@ -335,16 +251,16 @@ namespace SEModAPIExtensions.API
 					ServerNetworkManager.Instance.SendStruct( remoteUserId, chatMessageStruct, chatMessageStruct.GetType( ) );
 				}
 
-				m_chatMessages.Add( string.Format( "Server: {0}", message ) );
+				_chatMessages.Add( string.Format( "Server: {0}", message ) );
 
 				LogManager.ChatLog.WriteLineAndConsole( string.Format( "Chat - Server: {0}", message ) );
 
 				ChatEvent chatEvent = new ChatEvent( ChatEventType.OnChatSent, DateTime.Now, 0, remoteUserId, message, 0 );
 				Instance.AddEvent( chatEvent );
 
-				m_resourceLock.AcquireExclusive( );
-				m_chatHistory.Add( chatEvent );
-				m_resourceLock.ReleaseExclusive( );
+				_resourceLock.AcquireExclusive( );
+				_chatHistory.Add( chatEvent );
+				_resourceLock.ReleaseExclusive( );
 			}
 			catch ( Exception ex )
 			{
@@ -355,9 +271,13 @@ namespace SEModAPIExtensions.API
 		public void SendPublicChatMessage( string message )
 		{
 			if ( !SandboxGameAssemblyWrapper.Instance.IsGameStarted )
+			{
 				return;
+			}
 			if ( string.IsNullOrEmpty( message ) )
+			{
 				return;
+			}
 
 			bool commandParsed = ParseChatCommands( message );
 
@@ -370,12 +290,14 @@ namespace SEModAPIExtensions.API
 					foreach ( ulong remoteUserId in connectedPlayers )
 					{
 						if ( !remoteUserId.ToString( ).StartsWith( "9009" ) )
+						{
 							ServerNetworkManager.Instance.SendStruct( remoteUserId, chatMessageStruct, chatMessageStruct.GetType( ) );
+						}
 
 						ChatEvent chatEvent = new ChatEvent( ChatEventType.OnChatSent, DateTime.Now, 0, remoteUserId, message, 0 );
 						Instance.AddEvent( chatEvent );
 					}
-					m_chatMessages.Add( string.Format( "Server: {0}", message ) );
+					_chatMessages.Add( string.Format( "Server: {0}", message ) );
 					LogManager.ChatLog.WriteLineAndConsole( string.Format( "Chat - Server: {0}", message ) );
 				}
 
@@ -383,9 +305,9 @@ namespace SEModAPIExtensions.API
 				ChatEvent selfChatEvent = new ChatEvent( ChatEventType.OnChatReceived, DateTime.Now, 0, 0, message, 0 );
 				Instance.AddEvent( selfChatEvent );
 
-				m_resourceLock.AcquireExclusive( );
-				m_chatHistory.Add( selfChatEvent );
-				m_resourceLock.ReleaseExclusive( );
+				_resourceLock.AcquireExclusive( );
+				_chatHistory.Add( selfChatEvent );
+				_resourceLock.ReleaseExclusive( );
 			}
 			catch ( Exception ex )
 			{
@@ -398,29 +320,39 @@ namespace SEModAPIExtensions.API
 			try
 			{
 				if ( string.IsNullOrEmpty( message ) )
+				{
 					return false;
+				}
 
 				string[ ] commandParts = message.Split( ' ' );
 				if ( commandParts.Length == 0 )
+				{
 					return false;
+				}
 
 				//Skip if message doesn't have leading forward slash
 				if ( !message.Substring( 0, 1 ).Equals( "/" ) )
+				{
 					return false;
+				}
 
 				//Get the base command and strip off the leading slash
 				string command = commandParts[ 0 ].ToLower( ).Substring( 1 );
 				if ( string.IsNullOrEmpty( command ) )
+				{
 					return false;
+				}
 
 				//Search for a matching, registered command
 				bool foundMatch = false;
-				foreach ( ChatCommand chatCommand in m_chatCommands.Keys )
+				foreach ( ChatCommand chatCommand in _chatCommands.Keys )
 				{
 					try
 					{
 						if ( chatCommand.RequiresAdmin && remoteUserId != 0 && !PlayerManager.Instance.IsUserAdmin( remoteUserId ) )
+						{
 							continue;
+						}
 
 						if ( command.Equals( chatCommand.Command.ToLower( ) ) )
 						{
@@ -430,7 +362,9 @@ namespace SEModAPIExtensions.API
 							PluginManager.HookChatMessage( null, PluginManager.Instance.Plugins, PluginManager.Instance.PluginStates, chatEvent, out discard );
 
 							if ( !discard )
+							{
 								chatCommand.Callback( chatEvent );
+							}
 
 							foundMatch = true;
 							break;
@@ -454,44 +388,47 @@ namespace SEModAPIExtensions.API
 		public void RegisterChatCommand( ChatCommand command )
 		{
 			//Check if the given command already is registered
-			if ( m_chatCommands.Keys.Any( chatCommand => chatCommand.Command.ToLower( ).Equals( command.Command.ToLower( ) ) ) )
+			if ( _chatCommands.Keys.Any( chatCommand => chatCommand.Command.ToLower( ).Equals( command.Command.ToLower( ) ) ) )
 			{
 				return;
 			}
 
-			GuidAttribute guid = (GuidAttribute)Assembly.GetCallingAssembly( ).GetCustomAttributes( typeof( GuidAttribute ), true )[ 0 ];
-			Guid guidValue = new Guid( guid.Value );
+			GuidAttribute guid = (GuidAttribute) Assembly.GetCallingAssembly( ).GetCustomAttributes( typeof ( GuidAttribute ), true )[ 0 ];
+			try
+			{
+				Guid guidValue = new Guid( guid.Value );
+				_chatCommands.Add( command, guidValue );
+			}
+			catch ( OverflowException overflowException )
+			{
+				LogManager.ErrorLog.WriteLineAndConsole( "Failed to register chat command.", overflowException );
+			}
 
-			m_chatCommands.Add( command, guidValue );
 		}
 
 		public void UnregisterChatCommands( )
 		{
-			GuidAttribute guid = (GuidAttribute)Assembly.GetCallingAssembly( ).GetCustomAttributes( typeof( GuidAttribute ), true )[ 0 ];
+			GuidAttribute guid = (GuidAttribute) Assembly.GetCallingAssembly( ).GetCustomAttributes( typeof ( GuidAttribute ), true )[ 0 ];
 			Guid guidValue = new Guid( guid.Value );
 
-			List<ChatCommand> commandsToRemove = ( from entry in m_chatCommands
-												   where entry.Value.Equals( guidValue )
-												   select entry.Key ).ToList( );
+			List<ChatCommand> commandsToRemove = ( from entry in _chatCommands
+			                                       where entry.Value.Equals( guidValue )
+			                                       select entry.Key ).ToList( );
 			foreach ( ChatCommand entry in commandsToRemove )
 			{
-				m_chatCommands.Remove( entry );
+				_chatCommands.Remove( entry );
 			}
 		}
 
 		public void AddEvent( ChatEvent newEvent )
 		{
-			m_chatEvents.Add( newEvent );
+			_chatEvents.Add( newEvent );
 		}
 
 		public void ClearEvents( )
 		{
-			m_chatEvents.Clear( );
+			_chatEvents.Clear( );
 		}
-
-		#endregion
-
-		#region "Chat Command Callbacks"
 
 		protected void Command_Delete( ChatEvent chatEvent )
 		{
@@ -500,10 +437,12 @@ namespace SEModAPIExtensions.API
 			int paramCount = commandParts.Length - 1;
 
 			//All entities
-			if ( paramCount > 1 && commandParts[ 1 ].ToLower( ).Equals( "all" ) )
+			string whatToDelete = commandParts[ 1 ].ToLower( );
+			string deleteOption = commandParts[ 2 ].ToLower( );
+			if ( paramCount > 1 && whatToDelete.Equals( "all" ) )
 			{
 				//All cube grids that have no beacon or only a beacon with no name
-				if ( commandParts[ 2 ].ToLower( ).Equals( "nobeacon" ) )
+				if ( deleteOption.Equals( "nobeacon" ) )
 				{
 					List<CubeGridEntity> entities = SectorObjectManager.Instance.GetTypedInternalData<CubeGridEntity>( );
 					List<CubeGridEntity> entitiesToDispose = new List<CubeGridEntity>( );
@@ -532,7 +471,7 @@ namespace SEModAPIExtensions.API
 						{
 							if ( cubeBlock is MergeBlockEntity )
 							{
-								MergeBlockEntity block = (MergeBlockEntity)cubeBlock;
+								MergeBlockEntity block = (MergeBlockEntity) cubeBlock;
 								if ( block.IsAttached )
 								{
 									if ( !entitiesToDispose.Contains( block.AttachedCubeGrid ) )
@@ -544,7 +483,7 @@ namespace SEModAPIExtensions.API
 							}
 							if ( cubeBlock is PistonEntity )
 							{
-								PistonEntity block = (PistonEntity)cubeBlock;
+								PistonEntity block = (PistonEntity) cubeBlock;
 								CubeBlockEntity topBlock = block.TopBlock;
 								if ( topBlock != null )
 								{
@@ -557,7 +496,7 @@ namespace SEModAPIExtensions.API
 							}
 							if ( cubeBlock is RotorEntity )
 							{
-								RotorEntity block = (RotorEntity)cubeBlock;
+								RotorEntity block = (RotorEntity) cubeBlock;
 								CubeBlockEntity topBlock = block.TopBlock;
 								if ( topBlock != null )
 								{
@@ -570,7 +509,9 @@ namespace SEModAPIExtensions.API
 							}
 						}
 						if ( isLinkedShip )
+						{
 							continue;
+						}
 
 						entity.Dispose( );
 					}
@@ -578,7 +519,7 @@ namespace SEModAPIExtensions.API
 					SendPrivateChatMessage( remoteUserId, string.Format( "{0} cube grids have been removed", entitiesToDispose.Count ) );
 				}
 				//All cube grids that have no power
-				else if ( commandParts[ 2 ].ToLower( ).Equals( "nopower" ) )
+				else if ( deleteOption.Equals( "nopower" ) )
 				{
 					List<CubeGridEntity> entities = SectorObjectManager.Instance.GetTypedInternalData<CubeGridEntity>( );
 					List<CubeGridEntity> entitiesToDispose = entities.Where( entity => entity.TotalPower <= 0 ).ToList( );
@@ -590,7 +531,7 @@ namespace SEModAPIExtensions.API
 
 					SendPrivateChatMessage( remoteUserId, string.Format( "{0} cube grids have been removed", entitiesToDispose.Count ) );
 				}
-				else if ( commandParts[ 2 ].ToLower( ).Equals( "floatingobjects" ) )	//All floating objects
+				else if ( deleteOption.Equals( "floatingobjects" ) ) //All floating objects
 				{
 					/*
 					List<FloatingObject> entities = SectorObjectManager.Instance.GetTypedInternalData<FloatingObject>();
@@ -603,34 +544,36 @@ namespace SEModAPIExtensions.API
 
 					int count = 0;
 					SandboxGameAssemblyWrapper.Instance.GameAction( ( ) =>
-					{
-						HashSet<IMyEntity> entities = new HashSet<IMyEntity>( );
-						MyAPIGateway.Entities.GetEntities( entities );
-						List<IMyEntity> entitiesToRemove = new List<IMyEntity>( );
+					                                                {
+						                                                HashSet<IMyEntity> entities = new HashSet<IMyEntity>( );
+						                                                MyAPIGateway.Entities.GetEntities( entities );
+						                                                List<IMyEntity> entitiesToRemove = new List<IMyEntity>( );
 
-						foreach ( IMyEntity entity in entities )
-						{
-							MyObjectBuilder_Base objectBuilder;
-							try
-							{
-								objectBuilder = entity.GetObjectBuilder( );
-							}
-							catch
-							{
-								continue;
-							}
+						                                                foreach ( IMyEntity entity in entities )
+						                                                {
+							                                                MyObjectBuilder_Base objectBuilder;
+							                                                try
+							                                                {
+								                                                objectBuilder = entity.GetObjectBuilder( );
+							                                                }
+							                                                catch
+							                                                {
+								                                                continue;
+							                                                }
 
-							if ( objectBuilder is MyObjectBuilder_FloatingObject )
-								entitiesToRemove.Add( entity );
-						}
+							                                                if ( objectBuilder is MyObjectBuilder_FloatingObject )
+							                                                {
+								                                                entitiesToRemove.Add( entity );
+							                                                }
+						                                                }
 
-						for ( int r = entitiesToRemove.Count - 1; r >= 0; r-- )
-						{
-							IMyEntity entity = entitiesToRemove[ r ];
-							MyAPIGateway.Entities.RemoveEntity( entity );
-							count++;
-						}
-					} );
+						                                                for ( int r = entitiesToRemove.Count - 1; r >= 0; r-- )
+						                                                {
+							                                                IMyEntity entity = entitiesToRemove[ r ];
+							                                                MyAPIGateway.Entities.RemoveEntity( entity );
+							                                                count++;
+						                                                }
+					                                                } );
 
 					SendPrivateChatMessage( remoteUserId, count + " floating objects have been removed" );
 				}
@@ -641,7 +584,7 @@ namespace SEModAPIExtensions.API
 					{
 						for ( int i = 3; i < commandParts.Length; i++ )
 						{
-							entityName += " " + commandParts[ i ];
+							entityName += string.Format( " {0}", commandParts[ i ] );
 						}
 					}
 
@@ -651,7 +594,9 @@ namespace SEModAPIExtensions.API
 					{
 						bool isMatch = Regex.IsMatch( entity.Name, entityName, RegexOptions.IgnoreCase );
 						if ( !isMatch )
+						{
 							continue;
+						}
 
 						entity.Dispose( );
 
@@ -663,10 +608,10 @@ namespace SEModAPIExtensions.API
 			}
 
 			//All non-static cube grids
-			if ( paramCount > 1 && commandParts[ 1 ].ToLower( ).Equals( "ship" ) )
+			if ( paramCount > 1 && whatToDelete.Equals( "ship" ) )
 			{
 				//That have no beacon or only a beacon with no name
-				if ( commandParts[ 2 ].ToLower( ).Equals( "nobeacon" ) )
+				if ( deleteOption.Equals( "nobeacon" ) )
 				{
 					List<CubeGridEntity> entities = SectorObjectManager.Instance.GetTypedInternalData<CubeGridEntity>( );
 					List<CubeGridEntity> entitiesToDispose = new List<CubeGridEntity>( );
@@ -674,7 +619,9 @@ namespace SEModAPIExtensions.API
 					{
 						//Skip static cube grids
 						if ( entity.IsStatic )
+						{
 							continue;
+						}
 
 						if ( entity.Name.Equals( entity.EntityId.ToString( ) ) )
 						{
@@ -703,10 +650,10 @@ namespace SEModAPIExtensions.API
 			}
 
 			//All static cube grids
-			if ( paramCount > 1 && commandParts[ 1 ].ToLower( ).Equals( "station" ) )
+			if ( paramCount > 1 && whatToDelete.Equals( "station" ) )
 			{
 				//That have no beacon or only a beacon with no name
-				if ( commandParts[ 2 ].ToLower( ).Equals( "nobeacon" ) )
+				if ( deleteOption.Equals( "nobeacon" ) )
 				{
 					List<CubeGridEntity> entities = SectorObjectManager.Instance.GetTypedInternalData<CubeGridEntity>( );
 					List<CubeGridEntity> entitiesToDispose = new List<CubeGridEntity>( );
@@ -714,7 +661,9 @@ namespace SEModAPIExtensions.API
 					{
 						//Skip non-static cube grids
 						if ( !entity.IsStatic )
+						{
 							continue;
+						}
 
 						if ( entity.Name.Equals( entity.EntityId.ToString( ) ) )
 						{
@@ -802,35 +751,39 @@ namespace SEModAPIExtensions.API
 			}
 			*/
 			//Prunes defunct faction entries in the faction data
-			if ( paramCount > 1 && commandParts[ 1 ].ToLower( ).Equals( "faction" ) )
+			if ( paramCount > 1 && whatToDelete.Equals( "faction" ) )
 			{
 				List<Faction> factionsToRemove = new List<Faction>( );
-				if ( commandParts[ 2 ].ToLower( ).Equals( "empty" ) )
+				if ( deleteOption.Equals( "empty" ) )
 				{
 					factionsToRemove.AddRange( FactionsManager.Instance.Factions.Where( entry => entry.Members.Count == 0 ) );
 				}
-				if ( commandParts[ 2 ].ToLower( ).Equals( "nofounder" ) )
+				if ( deleteOption.Equals( "nofounder" ) )
 				{
-					foreach ( var entry in FactionsManager.Instance.Factions )
+					foreach ( Faction entry in FactionsManager.Instance.Factions )
 					{
 						bool founderMatch = entry.Members.Any( member => member.IsFounder );
 
 						if ( !founderMatch )
+						{
 							factionsToRemove.Add( entry );
+						}
 					}
 				}
-				if ( commandParts[ 2 ].ToLower( ).Equals( "noleader" ) )
+				if ( deleteOption.Equals( "noleader" ) )
 				{
-					foreach ( var entry in FactionsManager.Instance.Factions )
+					foreach ( Faction entry in FactionsManager.Instance.Factions )
 					{
 						bool founderMatch = entry.Members.Any( member => member.IsFounder || member.IsLeader );
 
 						if ( !founderMatch )
+						{
 							factionsToRemove.Add( entry );
+						}
 					}
 				}
 
-				foreach ( var entry in factionsToRemove )
+				foreach ( Faction entry in factionsToRemove )
 				{
 					FactionsManager.Instance.RemoveFaction( entry.Id );
 				}
@@ -851,7 +804,9 @@ namespace SEModAPIExtensions.API
 					foreach ( BaseEntity entity in entities )
 					{
 						if ( entity.EntityId != entityId )
+						{
 							continue;
+						}
 
 						entity.Dispose( );
 					}
@@ -880,7 +835,9 @@ namespace SEModAPIExtensions.API
 
 					string[ ] rawCoordinateValues = rawPosition.Split( ',' );
 					if ( rawCoordinateValues.Length < 3 )
+					{
 						return;
+					}
 
 					float x = float.Parse( rawCoordinateValues[ 0 ] );
 					float y = float.Parse( rawCoordinateValues[ 1 ] );
@@ -890,7 +847,9 @@ namespace SEModAPIExtensions.API
 					foreach ( BaseEntity entity in entities )
 					{
 						if ( entity.EntityId != entityId )
+						{
 							continue;
+						}
 
 						Vector3D newPosition = new Vector3D( x, y, z );
 						entity.Position = newPosition;
@@ -912,7 +871,9 @@ namespace SEModAPIExtensions.API
 			int paramCount = commandParts.Length - 1;
 
 			if ( paramCount != 1 )
+			{
 				return;
+			}
 
 			if ( commandParts[ 1 ].ToLower( ).Equals( "all" ) )
 			{
@@ -920,8 +881,8 @@ namespace SEModAPIExtensions.API
 				int entitiesStoppedCount = 0;
 				foreach ( BaseEntity entity in entities )
 				{
-					double linear = Math.Round( ( (Vector3)entity.LinearVelocity ).LengthSquared( ), 1 );
-					double angular = Math.Round( ( (Vector3)entity.AngularVelocity ).LengthSquared( ), 1 );
+					double linear = Math.Round( ( (Vector3) entity.LinearVelocity ).LengthSquared( ), 1 );
+					double angular = Math.Round( ( (Vector3) entity.AngularVelocity ).LengthSquared( ), 1 );
 
 					if ( linear > 0 || angular > 0 )
 					{
@@ -945,7 +906,9 @@ namespace SEModAPIExtensions.API
 					foreach ( BaseEntity entity in entities )
 					{
 						if ( entity.EntityId != entityId )
+						{
 							continue;
+						}
 
 						entity.LinearVelocity = Vector3.Zero;
 						entity.AngularVelocity = Vector3.Zero;
@@ -981,7 +944,9 @@ namespace SEModAPIExtensions.API
 				foreach ( BaseEntity entity in entities )
 				{
 					if ( !entity.Name.ToLower( ).Equals( entityName.ToLower( ) ) )
+					{
 						continue;
+					}
 
 					SendPrivateChatMessage( remoteUserId, string.Format( "Entity ID is '{0}'", entity.EntityId ) );
 				}
@@ -1025,7 +990,9 @@ namespace SEModAPIExtensions.API
 					foreach ( CubeGridEntity cubeGrid in entities )
 					{
 						if ( cubeGrid.EntityId != entityId )
+						{
 							continue;
+						}
 
 						//Update the owner of the blocks on the cube grid
 						foreach ( CubeBlockEntity cubeBlock in cubeGrid.CubeBlocks.Where( cubeBlock => cubeBlock.EntityId != 0 ) )
@@ -1061,11 +1028,15 @@ namespace SEModAPIExtensions.API
 					foreach ( BaseEntity entity in entities )
 					{
 						if ( entity.EntityId != entityId )
+						{
 							continue;
+						}
 
 						string modPath = MyFileSystem.ModsPath;
 						if ( !Directory.Exists( modPath ) )
+						{
 							break;
+						}
 
 						string fileName = entity.Name.ToLower( );
 						Regex rgx = new Regex( "[^a-zA-Z0-9]" );
@@ -1073,7 +1044,9 @@ namespace SEModAPIExtensions.API
 
 						string exportPath = Path.Combine( modPath, "Exports" );
 						if ( !Directory.Exists( exportPath ) )
+						{
 							Directory.CreateDirectory( exportPath );
+						}
 						FileInfo exportFile = new FileInfo( Path.Combine( exportPath, cleanFileName + ".sbc" ) );
 						entity.Export( exportFile );
 
@@ -1115,10 +1088,14 @@ namespace SEModAPIExtensions.API
 									while ( reader.Read( ) )
 									{
 										if ( reader.NodeType == XmlNodeType.XmlDeclaration )
+										{
 											continue;
+										}
 
 										if ( reader.NodeType != XmlNodeType.Element )
+										{
 											continue;
+										}
 
 										objectBuilderTypeName = reader.Name;
 										break;
@@ -1126,7 +1103,9 @@ namespace SEModAPIExtensions.API
 								}
 
 								if ( string.IsNullOrEmpty( objectBuilderTypeName ) )
+								{
 									return;
+								}
 
 								switch ( objectBuilderTypeName )
 								{
@@ -1134,6 +1113,7 @@ namespace SEModAPIExtensions.API
 										CubeGridEntity cubeGrid = new CubeGridEntity( importFile );
 										SectorObjectManager.Instance.AddEntity( cubeGrid );
 										break;
+
 									default:
 										break;
 								}
@@ -1176,36 +1156,39 @@ namespace SEModAPIExtensions.API
 			int paramCount = commandParts.Length - 1;
 
 			if ( paramCount != 1 )
+			{
 				return;
+			}
 
 			List<CubeGridEntity> cubeGrids = SectorObjectManager.Instance.GetTypedInternalData<CubeGridEntity>( );
 			int queueCount = 0;
-			foreach ( var cubeGrid in cubeGrids )
+			foreach ( CubeGridEntity cubeGrid in cubeGrids )
 			{
 				foreach ( CubeBlockEntity cubeBlock in cubeGrid.CubeBlocks )
 				{
-					if ( commandParts[ 1 ].ToLower( ).Equals( "productionqueue" ) && cubeBlock is ProductionBlockEntity )
+					string whatToClear = commandParts[ 1 ].ToLower( );
+					if ( whatToClear == "productionqueue" && cubeBlock is ProductionBlockEntity )
 					{
-						ProductionBlockEntity block = (ProductionBlockEntity)cubeBlock;
+						ProductionBlockEntity block = (ProductionBlockEntity) cubeBlock;
 						block.ClearQueue( );
 						queueCount++;
 					}
-					if ( commandParts[ 1 ].ToLower( ).Equals( "refineryqueue" ) && cubeBlock is RefineryEntity )
+					if ( whatToClear == "refineryqueue" && cubeBlock is RefineryEntity )
 					{
-						RefineryEntity block = (RefineryEntity)cubeBlock;
+						RefineryEntity block = (RefineryEntity) cubeBlock;
 						block.ClearQueue( );
 						queueCount++;
 					}
-					if ( commandParts[ 1 ].ToLower( ).Equals( "assemblerqueue" ) && cubeBlock is AssemblerEntity )
+					if ( whatToClear == "assemblerqueue" && cubeBlock is AssemblerEntity )
 					{
-						AssemblerEntity block = (AssemblerEntity)cubeBlock;
+						AssemblerEntity block = (AssemblerEntity) cubeBlock;
 						block.ClearQueue( );
 						queueCount++;
 					}
 				}
 			}
 
-			SendPrivateChatMessage( remoteUserId, "Cleared the production queue of " + queueCount + " blocks" );
+			SendPrivateChatMessage( remoteUserId, string.Format( "Cleared the production queue of {0} blocks", queueCount ) );
 		}
 
 		protected void Command_List( ChatEvent chatEvent )
@@ -1215,49 +1198,52 @@ namespace SEModAPIExtensions.API
 			int paramCount = commandParts.Length - 1;
 
 			if ( paramCount != 1 )
+			{
 				return;
+			}
 
-			if ( commandParts[ 1 ].ToLower( ).Equals( "all" ) )
+			string whatToList = commandParts[ 1 ].ToLower( );
+			if ( whatToList == "all" )
 			{
 				List<BaseEntity> entities = SectorObjectManager.Instance.GetTypedInternalData<BaseEntity>( );
-				LogManager.APILog.WriteLineAndConsole( "Total entities: '" + entities.Count + "'" );
+				LogManager.APILog.WriteLineAndConsole( string.Format( "Total entities: '{0}'", entities.Count ) );
 
-				SendPrivateChatMessage( remoteUserId, "Total entities: '" + entities.Count + "'" );
+				SendPrivateChatMessage( remoteUserId, string.Format( "Total entities: '{0}'", entities.Count ) );
 			}
-			if ( commandParts[ 1 ].ToLower( ).Equals( "cubegrid" ) )
+			if ( whatToList == "cubegrid" )
 			{
 				List<CubeGridEntity> entities = SectorObjectManager.Instance.GetTypedInternalData<CubeGridEntity>( );
-				LogManager.APILog.WriteLineAndConsole( "Cubegrid entities: '" + entities.Count + "'" );
+				LogManager.APILog.WriteLineAndConsole( string.Format( "Cubegrid entities: '{0}'", entities.Count ) );
 
-				SendPrivateChatMessage( remoteUserId, "Cubegrid entities: '" + entities.Count + "'" );
+				SendPrivateChatMessage( remoteUserId, string.Format( "Cubegrid entities: '{0}'", entities.Count ) );
 			}
-			if ( commandParts[ 1 ].ToLower( ).Equals( "character" ) )
+			if ( whatToList == "character" )
 			{
 				List<CharacterEntity> entities = SectorObjectManager.Instance.GetTypedInternalData<CharacterEntity>( );
-				LogManager.APILog.WriteLineAndConsole( "Character entities: '" + entities.Count + "'" );
+				LogManager.APILog.WriteLineAndConsole( string.Format( "Character entities: '{0}'", entities.Count ) );
 
-				SendPrivateChatMessage( remoteUserId, "Character entities: '" + entities.Count + "'" );
+				SendPrivateChatMessage( remoteUserId, string.Format( "Character entities: '{0}'", entities.Count ) );
 			}
-			if ( commandParts[ 1 ].ToLower( ).Equals( "voxelmap" ) )
+			if ( whatToList == "voxelmap" )
 			{
 				List<VoxelMap> entities = SectorObjectManager.Instance.GetTypedInternalData<VoxelMap>( );
-				LogManager.APILog.WriteLineAndConsole( "Voxelmap entities: '" + entities.Count + "'" );
+				LogManager.APILog.WriteLineAndConsole( string.Format( "Voxelmap entities: '{0}'", entities.Count ) );
 
-				SendPrivateChatMessage( remoteUserId, "Voxelmap entities: '" + entities.Count + "'" );
+				SendPrivateChatMessage( remoteUserId, string.Format( "Voxelmap entities: '{0}'", entities.Count ) );
 			}
-			if ( commandParts[ 1 ].ToLower( ).Equals( "meteor" ) )
+			if ( whatToList == "meteor" )
 			{
 				List<Meteor> entities = SectorObjectManager.Instance.GetTypedInternalData<Meteor>( );
-				LogManager.APILog.WriteLineAndConsole( "Meteor entities: '" + entities.Count + "'" );
+				LogManager.APILog.WriteLineAndConsole( string.Format( "Meteor entities: '{0}'", entities.Count ) );
 
-				SendPrivateChatMessage( remoteUserId, "Meteor entities: '" + entities.Count + "'" );
+				SendPrivateChatMessage( remoteUserId, string.Format( "Meteor entities: '{0}'", entities.Count ) );
 			}
-			if ( commandParts[ 1 ].ToLower( ).Equals( "floatingobject" ) )
+			if ( whatToList == "floatingobject" )
 			{
 				List<FloatingObject> entities = SectorObjectManager.Instance.GetTypedInternalData<FloatingObject>( );
-				LogManager.APILog.WriteLineAndConsole( "Floating object entities: '" + entities.Count + "'" );
+				LogManager.APILog.WriteLineAndConsole( string.Format( "Floating object entities: '{0}'", entities.Count ) );
 
-				SendPrivateChatMessage( remoteUserId, "Floating object entities: '" + entities.Count + "'" );
+				SendPrivateChatMessage( remoteUserId, string.Format( "Floating object entities: '{0}'", entities.Count ) );
 			}
 		}
 
@@ -1268,57 +1254,60 @@ namespace SEModAPIExtensions.API
 			int paramCount = commandParts.Length - 1;
 
 			if ( paramCount != 1 )
+			{
 				return;
+			}
 
 			List<CubeGridEntity> cubeGrids = SectorObjectManager.Instance.GetTypedInternalData<CubeGridEntity>( );
 			int poweredOffCount = 0;
-			foreach ( var cubeGrid in cubeGrids )
+			string whatToShutOff = commandParts[ 1 ].ToLower( );
+			foreach ( CubeGridEntity cubeGrid in cubeGrids )
 			{
 				foreach ( CubeBlockEntity cubeBlock in cubeGrid.CubeBlocks )
 				{
-					if ( !( cubeBlock is FunctionalBlockEntity ) )
+					FunctionalBlockEntity functionalBlock = cubeBlock as FunctionalBlockEntity;
+					if ( functionalBlock == null )
+					{
 						continue;
+					}
 
-					FunctionalBlockEntity functionalBlock = (FunctionalBlockEntity)cubeBlock;
-
-					if ( commandParts[ 1 ].ToLower( ).Equals( "all" ) )
+					if ( whatToShutOff == "all" )
 					{
 						functionalBlock.Enabled = false;
 						poweredOffCount++;
 					}
-					if ( commandParts[ 1 ].ToLower( ).Equals( "production" ) && cubeBlock is ProductionBlockEntity )
+					if ( whatToShutOff == "production" && cubeBlock is ProductionBlockEntity )
 					{
 						functionalBlock.Enabled = false;
 						poweredOffCount++;
 					}
-					if ( commandParts[ 1 ].ToLower( ).Equals( "beacon" ) && cubeBlock is BeaconEntity )
+					if ( whatToShutOff == "beacon" && cubeBlock is BeaconEntity )
 					{
 						functionalBlock.Enabled = false;
-						BeaconEntity beacon = (BeaconEntity)cubeBlock;
+						BeaconEntity beacon = (BeaconEntity) cubeBlock;
 						beacon.BroadcastRadius = 1;
 						poweredOffCount++;
 					}
-					if ( commandParts[ 1 ].ToLower( ).Equals( "tools" ) && ( cubeBlock is ShipToolBaseEntity || cubeBlock is ShipDrillEntity ) )
+					if ( whatToShutOff == "tools" && ( cubeBlock is ShipToolBaseEntity || cubeBlock is ShipDrillEntity ) )
 					{
 						functionalBlock.Enabled = false;
 						poweredOffCount++;
 					}
-					if ( commandParts[ 1 ].ToLower( ).Equals( "turrets" ) && ( cubeBlock is TurretBaseEntity ) )
-					{
-						functionalBlock.Enabled = false;
-						poweredOffCount++;
-					}
-
-					if ( commandParts[ 1 ].ToLower( ).Equals( cubeBlock.Id.SubtypeName.ToLower( ) ) )
+					if ( whatToShutOff == "turrets" && ( cubeBlock is TurretBaseEntity ) )
 					{
 						functionalBlock.Enabled = false;
 						poweredOffCount++;
 					}
 
+					if ( whatToShutOff == cubeBlock.Id.SubtypeName.ToLower( ) )
+					{
+						functionalBlock.Enabled = false;
+						poweredOffCount++;
+					}
 				}
 			}
 
-			SendPrivateChatMessage( remoteUserId, "Turned off " + poweredOffCount + " blocks" );
+			SendPrivateChatMessage( remoteUserId, string.Format( "Turned off {0} blocks", poweredOffCount ) );
 		}
 
 		protected void Command_On( ChatEvent chatEvent )
@@ -1328,18 +1317,22 @@ namespace SEModAPIExtensions.API
 			int paramCount = commandParts.Length - 1;
 
 			if ( paramCount != 1 )
+			{
 				return;
+			}
 
 			List<CubeGridEntity> cubeGrids = SectorObjectManager.Instance.GetTypedInternalData<CubeGridEntity>( );
 			int poweredOffCount = 0;
-			foreach ( var cubeGrid in cubeGrids )
+			foreach ( CubeGridEntity cubeGrid in cubeGrids )
 			{
 				foreach ( CubeBlockEntity cubeBlock in cubeGrid.CubeBlocks )
 				{
 					if ( !( cubeBlock is FunctionalBlockEntity ) )
+					{
 						continue;
+					}
 
-					FunctionalBlockEntity functionalBlock = (FunctionalBlockEntity)cubeBlock;
+					FunctionalBlockEntity functionalBlock = (FunctionalBlockEntity) cubeBlock;
 
 					if ( commandParts[ 1 ].ToLower( ).Equals( "all" ) )
 					{
@@ -1385,7 +1378,9 @@ namespace SEModAPIExtensions.API
 			int paramCount = commandParts.Length - 1;
 
 			if ( paramCount != 1 )
+			{
 				return;
+			}
 
 			//Get the steam id of the player
 			string rawSteamId = commandParts[ 1 ];
@@ -1397,12 +1392,14 @@ namespace SEModAPIExtensions.API
 			}
 
 			ulong steamId;
-			var playerItems = PlayerManager.Instance.PlayerMap.GetPlayerItemsFromPlayerName( rawSteamId );
+			List<PlayerMap.InternalPlayerItem> playerItems = PlayerManager.Instance.PlayerMap.GetPlayerItemsFromPlayerName( rawSteamId );
 			if ( playerItems.Count == 0 )
 			{
 				steamId = PlayerManager.Instance.PlayerMap.GetSteamIdFromPlayerName( rawSteamId );
 				if ( steamId == 0 )
+				{
 					return;
+				}
 			}
 			else
 			{
@@ -1410,15 +1407,17 @@ namespace SEModAPIExtensions.API
 				{
 					SendPrivateChatMessage( remoteUserId, "There is more than one player with the specified name;" );
 
-					string playersString = playerItems.Aggregate( string.Empty, ( current, playeritem ) => string.Format( "{0}{1} ", current, playeritem.name  ) );
+					string playersString = playerItems.Aggregate( string.Empty, ( current, playeritem ) => string.Format( "{0}{1} ", current, playeritem.Name ) );
 
 					SendPrivateChatMessage( remoteUserId, playersString );
 					return;
 				}
 
-				steamId = playerItems[ 0 ].steamId;
+				steamId = playerItems[ 0 ].SteamId;
 				if ( steamId == 0 )
+				{
 					return;
+				}
 			}
 
 			if ( steamId.ToString( ).StartsWith( "9009" ) )
@@ -1428,7 +1427,7 @@ namespace SEModAPIExtensions.API
 			}
 
 			PlayerManager.Instance.KickPlayer( steamId );
-			SendPrivateChatMessage( remoteUserId, string.Format( "Kicked player '{0}' off of the server", ( playerItems.Count == 0 ? rawSteamId : playerItems[ 0 ].name ) ) );
+			SendPrivateChatMessage( remoteUserId, string.Format( "Kicked player '{0}' off of the server", ( playerItems.Count == 0 ? rawSteamId : playerItems[ 0 ].Name ) ) );
 		}
 
 		protected void Command_Ban( ChatEvent chatEvent )
@@ -1438,7 +1437,9 @@ namespace SEModAPIExtensions.API
 			int paramCount = commandParts.Length - 1;
 
 			if ( paramCount != 1 )
+			{
 				return;
+			}
 
 			//Get the steam id of the player
 			string rawSteamId = commandParts[ 1 ];
@@ -1451,13 +1452,15 @@ namespace SEModAPIExtensions.API
 
 			ulong steamId;
 
-			var playerItems = PlayerManager.Instance.PlayerMap.GetPlayerItemsFromPlayerName( rawSteamId );
+			List<PlayerMap.InternalPlayerItem> playerItems = PlayerManager.Instance.PlayerMap.GetPlayerItemsFromPlayerName( rawSteamId );
 
 			if ( playerItems.Count == 0 )
 			{
 				steamId = PlayerManager.Instance.PlayerMap.GetSteamIdFromPlayerName( rawSteamId );
 				if ( steamId == 0 )
+				{
 					return;
+				}
 			}
 			else
 			{
@@ -1465,15 +1468,17 @@ namespace SEModAPIExtensions.API
 				{
 					SendPrivateChatMessage( remoteUserId, "There is more than one player with the specified name;" );
 
-					string playersString = playerItems.Aggregate( string.Empty, ( current, playeritem ) => string.Format( "{0}{1} ", current, playeritem.name ) );
+					string playersString = playerItems.Aggregate( string.Empty, ( current, playeritem ) => string.Format( "{0}{1} ", current, playeritem.Name ) );
 
 					SendPrivateChatMessage( remoteUserId, playersString );
 					return;
 				}
 
-				steamId = playerItems[ 0 ].steamId;
+				steamId = playerItems[ 0 ].SteamId;
 				if ( steamId == 0 )
+				{
 					return;
+				}
 			}
 
 			if ( steamId.ToString( ).StartsWith( "9009" ) )
@@ -1484,7 +1489,7 @@ namespace SEModAPIExtensions.API
 
 			PlayerManager.Instance.BanPlayer( steamId );
 
-			SendPrivateChatMessage( remoteUserId, string.Format( "Banned '{0}' and kicked them off of the server", ( playerItems.Count == 0 ? rawSteamId : playerItems[ 0 ].name ) ) );
+			SendPrivateChatMessage( remoteUserId, string.Format( "Banned '{0}' and kicked them off of the server", ( playerItems.Count == 0 ? rawSteamId : playerItems[ 0 ].Name ) ) );
 		}
 
 		protected void Command_Unban( ChatEvent chatEvent )
@@ -1494,7 +1499,9 @@ namespace SEModAPIExtensions.API
 			int paramCount = commandParts.Length - 1;
 
 			if ( paramCount != 1 )
+			{
 				return;
+			}
 
 			//Get the steam id of the player
 			string rawSteamId = commandParts[ 1 ];
@@ -1507,13 +1514,15 @@ namespace SEModAPIExtensions.API
 
 			ulong steamId;
 
-			var playerItems = PlayerManager.Instance.PlayerMap.GetPlayerItemsFromPlayerName( rawSteamId );
+			List<PlayerMap.InternalPlayerItem> playerItems = PlayerManager.Instance.PlayerMap.GetPlayerItemsFromPlayerName( rawSteamId );
 
 			if ( playerItems.Count == 0 )
 			{
 				steamId = PlayerManager.Instance.PlayerMap.GetSteamIdFromPlayerName( rawSteamId );
 				if ( steamId == 0 )
+				{
 					return;
+				}
 			}
 			else
 			{
@@ -1521,24 +1530,72 @@ namespace SEModAPIExtensions.API
 				{
 					SendPrivateChatMessage( remoteUserId, "There is more than one player with the specified name;" );
 
-					string playersString = playerItems.Aggregate( string.Empty, ( current, playeritem ) => string.Format( "{0}{1} ", current, playeritem.name ) );
+					string playersString = playerItems.Aggregate( string.Empty, ( current, playeritem ) => string.Format( "{0}{1} ", current, playeritem.Name ) );
 
 					SendPrivateChatMessage( remoteUserId, playersString );
 					return;
 				}
 
-				steamId = playerItems[ 0 ].steamId;
+				steamId = playerItems[ 0 ].SteamId;
 				if ( steamId == 0 )
+				{
 					return;
+				}
 			}
 
 			PlayerManager.Instance.UnBanPlayer( steamId );
 
-			SendPrivateChatMessage( remoteUserId, string.Format( "Unbanned '{0}'", ( playerItems.Count == 0 ? rawSteamId : playerItems[ 0 ].name ) ) );
+			SendPrivateChatMessage( remoteUserId, string.Format( "Unbanned '{0}'", ( playerItems.Count == 0 ? rawSteamId : playerItems[ 0 ].Name ) ) );
 		}
 
-		#endregion
+		public class ChatCommand
+		{
+			public Action<ChatEvent> Callback;
+			public string Command;
+			public bool RequiresAdmin;
 
-		#endregion
+			public ChatCommand( )
+			{
+			}
+
+			public ChatCommand( string command, Action<ChatEvent> callback, bool requiresAdmin )
+			{
+				Command = command;
+				Callback = callback;
+				RequiresAdmin = requiresAdmin;
+			}
+		}
+
+		public class ChatEvent
+		{
+			public string Message;
+			public ushort Priority;
+			public ulong RemoteUserId;
+			public ulong SourceUserId;
+			public DateTime Timestamp;
+			public ChatEventType Type;
+
+			public ChatEvent( ChatEventType type, DateTime timestamp, ulong sourceUserId, ulong remoteUserId, string message, ushort priority )
+			{
+				Type = type;
+				Timestamp = timestamp;
+				SourceUserId = sourceUserId;
+				RemoteUserId = remoteUserId;
+				Message = message;
+				Priority = priority;
+			}
+
+			public ChatEvent( DateTime timestamp, ulong remoteUserId, string message )
+			{
+				Timestamp = timestamp;
+				RemoteUserId = remoteUserId;
+				Message = message;
+
+				//Defaults
+				Type = ChatEventType.OnChatReceived;
+				SourceUserId = 0;
+				Priority = 0;
+			}
+		}
 	}
 }

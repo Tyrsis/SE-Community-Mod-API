@@ -1,32 +1,13 @@
-﻿using SteamSDK;
-
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Collections;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Threading;
-using System.IO;
-using System.Runtime.ExceptionServices;
-using System.Security;
-
-using Sandbox.ModAPI;
-using Sandbox.Common.ObjectBuilders;
-using Sandbox.Common.ObjectBuilders.Serializer;
-using Sandbox.Common.ObjectBuilders.Voxels;
-
-using SEModAPIInternal.Support;
-using SEModAPIInternal.API.Entity;
-using SEModAPIInternal.API.Utility;
-using System.Linq.Expressions;
-
-using VRageMath;
-
-using SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid.CubeBlock;
-
-namespace SEModAPIInternal.API.Common
+﻿namespace SEModAPIInternal.API.Common
 {
+	using System;
+	using System.Collections.Generic;
+	using System.Reflection;
+	using SEModAPIInternal.API.Entity;
+	using SEModAPIInternal.API.Utility;
+	using SEModAPIInternal.Support;
+	using SteamSDK;
+
 	//PacketIdEnum Attribute: C42525D7DE28CE4CFB44651F3D03A50D.4C6398741B0F8804D769E5A2E3999E1D
 
 	public enum PacketIds
@@ -46,14 +27,14 @@ namespace SEModAPIInternal.API.Common
 		FloatingObjectContents = 10151,					//..0008E59AE36FA0F2E7ED91037507E4E8
 		ChatMessage = 13872,							//C42525D7DE28CE4CFB44651F3D03A50D.12AEE9CB08C9FC64151B8A094D6BB668
 		TerminalFunctionalBlockEnabled = 15268,			//..7F2B3C2BC4F8C6F50583C135CA112213
-		TerminalFunctionalBlockName = 15269,			//..721B404F9CB193B34D5353A019A57DAB
+		TerminalFunctionalBlockName = 15269			//..721B404F9CB193B34D5353A019A57DAB
 	}
 
 	public enum PacketRegistrationType
 	{
 		Static,
 		Instance,
-		Timespan,
+		Timespan
 	}
 
 	public abstract class NetworkManager
@@ -160,15 +141,13 @@ namespace SEModAPIInternal.API.Common
 		{
 			try
 			{
-				bool result = true;
-
 				Type type = NetworkManagerType;
 				if (type == null)
-					throw new Exception("Could not find internal type for NetworkManager");
+					throw new TypeLoadException("Could not find internal type for NetworkManager");
 
-				return result;
+				return true;
 			}
-			catch (Exception ex)
+			catch (TypeLoadException ex)
 			{
 				Console.WriteLine(ex);
 				return false;
@@ -200,7 +179,7 @@ namespace SEModAPIInternal.API.Common
 				sendStructMethod = sendStructMethod.MakeGenericMethod(structType);
 
 				var netManager = GetNetworkManager();
-				sendStructMethod.Invoke(netManager, new object[] { remoteUserId, data });
+				sendStructMethod.Invoke(netManager, new[] { remoteUserId, data });
 			}
 			catch (Exception ex)
 			{
@@ -283,13 +262,13 @@ namespace SEModAPIInternal.API.Common
 				switch (registrationType)
 				{
 					case PacketRegistrationType.Static:
-						delegateType = typeof(NetworkManager.ReceivePacketStatic<>);
+						delegateType = typeof(ReceivePacketStatic<>);
 						break;
 					case PacketRegistrationType.Instance:
-						delegateType = typeof(NetworkManager.ReceivePacketInstance<>);
+						delegateType = typeof(ReceivePacketInstance<>);
 						break;
 					case PacketRegistrationType.Timespan:
-						delegateType = typeof(NetworkManager.ReceivePacketTimespan<>);
+						delegateType = typeof(ReceivePacketTimespan<>);
 						break;
 					default:
 						return null;
@@ -310,7 +289,7 @@ namespace SEModAPIInternal.API.Common
 		{
 			try
 			{
-				Type masterNetManagerType = SandboxGameAssemblyWrapper.Instance.GetAssemblyType(NetworkManager.InternalNetManagerNamespace, NetworkManager.InternalNetManagerClass);
+				Type masterNetManagerType = SandboxGameAssemblyWrapper.Instance.GetAssemblyType(InternalNetManagerNamespace, InternalNetManagerClass);
 
 				MethodInfo[] methods = masterNetManagerType.GetMethods(BindingFlags.Public | BindingFlags.Static);
 				foreach (MethodInfo method in methods)
@@ -363,7 +342,7 @@ namespace SEModAPIInternal.API.Common
 					return false;
 
 				//Find the old packet handler
-				Type masterNetManagerType = SandboxGameAssemblyWrapper.Instance.GetAssemblyType(NetworkManager.InternalNetManagerNamespace, NetworkManager.InternalNetManagerClass);
+				Type masterNetManagerType = SandboxGameAssemblyWrapper.Instance.GetAssemblyType(InternalNetManagerNamespace, InternalNetManagerClass);
 				FieldInfo packetRegisteryHashSetField = masterNetManagerType.GetField("9858E5CD512FFA5633683B9551FA4C30", BindingFlags.NonPublic | BindingFlags.Static);
 				Object packetRegisteryHashSetRaw = packetRegisteryHashSetField.GetValue(null);
 				HashSet<Object> packetRegisteryHashSet = UtilityFunctions.ConvertHashSet(packetRegisteryHashSetRaw);
@@ -448,7 +427,7 @@ namespace SEModAPIInternal.API.Common
 
 				//Remove the old handler from the registry
 				MethodInfo removeMethod = packetRegisteryHashSetRaw.GetType().GetMethod("Remove");
-				removeMethod.Invoke(packetRegisteryHashSetRaw, new object[] { matchedHandler });
+				removeMethod.Invoke(packetRegisteryHashSetRaw, new[] { matchedHandler });
 
 				//Update the handler delegate with our new method info
 				methodBaseField.SetValue(action3, handlerAction.Method);
@@ -464,15 +443,15 @@ namespace SEModAPIInternal.API.Common
 				{
 					case PacketRegistrationType.Static:
 						registerMethod = m_registerPacketHandlerMethod.MakeGenericMethod(packetType);
-						registerMethod.Invoke(null, new object[] { action3, flagsValue, secondaryFlags, serializerValue });
+						registerMethod.Invoke(null, new[] { action3, flagsValue, secondaryFlags, serializerValue });
 						break;
 					case PacketRegistrationType.Instance:
 						registerMethod = m_registerPacketHandlerMethod2.MakeGenericMethod(baseNetManagerType, packetType);
-						registerMethod.Invoke(null, new object[] { action3, flagsValue, secondaryFlags, serializerValue });
+						registerMethod.Invoke(null, new[] { action3, flagsValue, secondaryFlags, serializerValue });
 						break;
 					case PacketRegistrationType.Timespan:
 						registerMethod = m_registerPacketHandlerMethod3.MakeGenericMethod(packetType);
-						registerMethod.Invoke(null, new object[] { action3, flagsValue, secondaryFlags, serializerValue });
+						registerMethod.Invoke(null, new[] { action3, flagsValue, secondaryFlags, serializerValue });
 						break;
 					default:
 						return false;
